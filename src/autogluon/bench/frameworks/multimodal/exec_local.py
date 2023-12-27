@@ -68,6 +68,9 @@ def get_args():
     parser.add_argument(
         "--lr_decay", type=float, default=0.9, help="It is used only when lr_choice is layerwise_decay"
     )
+    parser.add_argument(
+        "--resume", action="store_true", default=False
+    )
 
     
     ### Converting Tabular Data into Text
@@ -180,6 +183,7 @@ def run(
     custom_dataloader: Optional[dict] = None,
     custom_metrics: Optional[dict] = None,
     eval_model_path: Optional[str] = None,
+    resume: bool = False
 ):
     """Runs the AutoGluon multimodal benchmark on a given dataset.
 
@@ -249,6 +253,8 @@ def run(
         predictor = predictor.load(eval_model_path)
         training_duration = 0.
     else:
+        if resume:
+            predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) # 如果不写resume = True，就会加载这个ckpt后从epoch 0开始训练。
         start_time = time.time()
         predictor.fit(**fit_args)
         end_time = time.time()
@@ -341,5 +347,6 @@ if __name__ == "__main__":
         params=args.params,
         custom_dataloader=args.custom_dataloader,
         custom_metrics=args.custom_metrics,
-        eval_model_path=args.eval_model_path
+        eval_model_path=args.eval_model_path,
+        resume=args.resume
     )
