@@ -86,6 +86,9 @@ def get_args():
     parser.add_argument(
         "--lr", type=float, default=0.0001
     )
+    parser.add_argument(
+        "--resume", action="store_true", default=False
+    )
 
     # 
     
@@ -195,6 +198,7 @@ def run(
     custom_dataloader: Optional[dict] = None,
     custom_metrics: Optional[dict] = None,
     eval_model_path: Optional[str] = None,
+    resume: bool = False
 ):
     """Runs the AutoGluon multimodal benchmark on a given dataset.
 
@@ -279,6 +283,8 @@ def run(
         predictor = predictor.load(eval_model_path)
         training_duration = 0.
     else:
+        if resume:
+            predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) # 如果不写resume = True，就会加载这个ckpt后从epoch 0开始训练。
         start_time = time.time()
         predictor.fit(**fit_args)
         end_time = time.time()
@@ -353,7 +359,7 @@ if __name__ == "__main__":
     args.params['hyperparameters']["optimization.efficient_finetune"] = args.peft
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
-    args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
+    # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
     
@@ -379,7 +385,8 @@ if __name__ == "__main__":
         params=args.params,
         custom_dataloader=args.custom_dataloader,
         custom_metrics=args.custom_metrics,
-        eval_model_path=args.eval_model_path
+        eval_model_path=args.eval_model_path,
+        resume=args.resume
     )
 
    
