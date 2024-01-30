@@ -274,6 +274,9 @@ def run(
     if custom_metrics is not None and custom_metrics["function_name"] == train_data.metric:
         metrics_func = load_custom_metrics(custom_metrics=custom_metrics)
 
+    if train_data.loss_func is not None:
+        params['hyperparameters']['optimization.loss_function'] = train_data.loss_func
+
     predictor = MultiModalPredictor(**predictor_args)
 
     fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
