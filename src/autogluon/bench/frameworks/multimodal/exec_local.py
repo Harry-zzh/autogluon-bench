@@ -90,8 +90,9 @@ def get_args():
         "--resume", action="store_true", default=False
     )
 
-    # 
-    
+    parser.add_argument(
+        "--ft_transformer_ckpt_name", action="store_true", default=False
+    )
 
     
     args = parser.parse_args()
@@ -362,6 +363,9 @@ if __name__ == "__main__":
     # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
+
+    if args.ft_transformer_ckpt_name:
+        args.params['hyperparameters']['model.ft_transformer.checkpoint_name'] = "https://automl-mm-bench.s3.amazonaws.com/ft_transformer_pretrained_ckpt/iter_2k.ckpt"
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
