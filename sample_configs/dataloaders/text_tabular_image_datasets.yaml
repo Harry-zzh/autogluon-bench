@@ -1,0 +1,1626 @@
+# if feature_columns is null, then it is determined by ignore_columns
+base: &base
+  url: s3://automl-mm-bench/DATA_FILE_NAME.zip
+  sha1sum: 41f930a1329b63ade7933cfa7839466e56ea6f06
+  train_file: train.csv
+  test_file: test.csv
+  data_folder: null
+  splits:
+    - train
+    - test
+  train_subset: null
+  test_subset: null
+  feature_columns:
+    - ImageID
+  label_columns:
+    - LabelName
+  image_columns:
+    - image
+  ignore_columns: null
+  metric: acc
+  problem_type: multiclass
+  convert_to_log: False
+  loss_func: null
+  
+
+petfinder:
+  <<: *base
+  url: s3://automl-mm-bench/petfinder_kaggle.zip
+  sha1sum: 33d80b8a3bdfa6b9b4d97a81745cae0b036c139b
+  test_file: dev.csv
+  feature_columns:
+    - Type
+    - Name
+    - Age
+    - Breed1
+    - Breed2
+    - Gender
+    - Color1
+    - Color2
+    - Color3
+    - MaturitySize
+    - FurLength
+    - Vaccinated
+    - Dewormed
+    - Sterilized
+    - Health
+    - Quantity
+    - Fee
+    - State
+    - VideoAmt
+    - Description
+    - PhotoAmt
+    - Images
+  label_columns:
+    - AdoptionSpeed
+  image_columns:
+    - Images
+  metric: quadratic_kappa
+  problem_type: multiclass
+
+hateful_memes:
+  <<: *base
+  url: s3://automl-mm-bench/hateful_memes_processed.zip
+  sha1sum: 56fe1bba3310272f9b2e59061a78d9f3520746e9
+  test_file: dev.csv
+  feature_columns:
+    - img
+    - text
+  label_columns:
+    - label
+  image_columns:
+    - img
+  # metric: accuracy
+  metric: roc_auc
+  problem_type: binary
+
+persuasive_techniques:
+  <<: *base
+  url: s3://automl-mm-bench/persuasive_techniques_processed.zip
+  sha1sum: 41f930a1329b63ade7933cfa7839466e56ea6f06
+  train_file: train_processed.csv
+  test_file: test_processed.csv
+  feature_columns:
+    - text
+    - image
+  label_columns:
+    - Smears
+    - Loaded Language
+    - Name calling/Labeling
+  image_columns:
+    - image
+  # metric: accuracy
+  metric: roc_auc
+  problem_type: binary
+
+yelp:
+  <<: *base
+  url: s3://automl-mm-bench/yelp_processed.zip
+  sha1sum: c4cca722dd617cc9319dbf4e12f4f16cbc7776a0
+  train_file: train_processed.csv
+  test_file: val_processed.csv
+  feature_columns:
+    - images
+    - good_for_lunch
+    - good_for_dinner
+    - takes_reservations
+    - outdoor_seating
+    - has_alcohol
+    - has_table_service
+    - good_for_kids
+  label_columns:
+    - restaurant_is_expensive
+  image_columns:
+    - images
+  # metric: accuracy
+  metric: roc_auc
+  problem_type: binary
+
+grocery_image:
+  <<: *base
+  url: s3://automl-mm-bench/grocery_image_processed.zip
+  sha1sum: 22c58530d952b6a456cec8ab900d29a5a01d913e
+  train_file: train.csv
+  test_file: test.csv
+  feature_columns:
+    - IMAGE
+    - BRAND
+    - GENERIC_KEYWORD
+    - ITEM_NAME
+    - ocr_text
+  label_columns:
+    - IS_MATCH
+  image_columns:
+    - IMAGE
+  metric: accuracy
+  problem_type: binary
+
+mmimdb:
+  <<: *base
+  url: s3://automl-mm-bench/mmimdb_processed.zip
+  sha1sum: 163c07fa850a4c5708d88d2ca3fa87df9042d3b3
+  train_file: train.csv
+  test_file: test.csv
+  feature_columns: ['akas', 'aspect ratio', 'canonical title', 'cinematographer',
+       'color info', 'countries', 'country codes', 'director', 'distributors',
+       'editor', 'kind', 'language codes', 'languages',
+       'long imdb canonical title', 'long imdb title', 'music department',
+       'original music', 'plot', 'plot outline', 'producer',
+       'production companies', 'production manager', 'rating', 'runtimes',
+       'smart canonical title', 'smart long imdb canonical title',
+       'sound crew', 'sound mix', 'title', 'votes', 'year', 'art department',
+       'art direction', 'assistant director',
+       'camera and electrical department', 'cast', 'casting department',
+       'casting director', 'certificates', 'costume department',
+       'costume designer', 'editorial department', 'location management',
+       'make up', 'miscellaneous companies', 'miscellaneous crew', 'mpaa',
+       'production design', 'set decoration', 'special effects companies',
+       'special effects department', 'stunt performer',
+       'transportation department', 'visual effects', 'writer',
+       'animation department', 'thanks', 'top 250 rank', 'imdbIndex',
+       'number of seasons', 'series years', 'bottom 100 rank',
+       'canonical episode title', 'canonical series title', 'episode',
+       'episode of', 'episode title', 'long imdb episode title',
+       'number of episodes', 'original air date', 'season', 'series title',
+       'smart canonical episode title', 'smart canonical series title',
+       'creator', 'music non original', 'series writers', 'series directors',
+       'series assistant directors', 'series camera department',
+       'series casting directors', 'series cinematographers',
+       'series editorial department', 'series location management',
+       'series make up department', 'series miscellaneous',
+       'series sound department', 'series stunts', 'series producers',
+       'series production managers', 'series editors',
+       'series production designers', 'series music department', 'image']
+  label_columns:
+    - is_drama
+  image_columns:
+    - image
+  metric: accuracy
+  problem_type: binary
+
+san_francisco_airbnb:
+  <<: *base
+  url: s3://automl-mm-bench/san_francisco_airbnb_processed.zip
+  sha1sum: 0e1e099f5be4c50bcd453f954ce1a8334d7f9659
+  train_file: train.csv
+  test_file: test.csv
+  feature_columns: ['name', 'description', 'neighborhood_overview',
+       'host_since', 'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_listings_count',
+       'host_total_listings_count', 'host_has_profile_pic',
+       'host_identity_verified', 'neighbourhood', 'neighbourhood_cleansed',
+       'neighbourhood_group_cleansed', 'latitude', 'longitude',
+       'property_type', 'room_type', 'accommodates', 'bathrooms', 'bedrooms',
+       'beds', 'amenities', 'minimum_nights', 'maximum_nights',
+       'minimum_minimum_nights', 'maximum_minimum_nights',
+       'minimum_maximum_nights', 'maximum_maximum_nights',
+       'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'number_of_reviews', 'number_of_reviews_ltm',
+       'number_of_reviews_l30d', 'first_review', 'last_review',
+       'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'host_image', 'image']
+  label_columns:
+    - price
+  image_columns:
+    - image
+    - host_image
+  metric: rmse
+  problem_type: regression
+  convert_to_log: True
+
+seattle_airbnb:
+  <<: *base
+  url: s3://automl-mm-bench/seattle_airbnb_processed.zip
+  sha1sum: 184d117c2d736c88847f29326fdcbccfec079eb4
+  train_file: train.csv
+  test_file: test.csv
+  feature_columns: ['name', 'description', 'neighborhood_overview',
+       'host_since', 'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_listings_count',
+       'host_total_listings_count', 'host_has_profile_pic',
+       'host_identity_verified', 'neighbourhood', 'neighbourhood_cleansed',
+       'neighbourhood_group_cleansed', 'latitude', 'longitude',
+       'property_type', 'room_type', 'accommodates', 'bathrooms', 'bedrooms',
+       'beds', 'amenities', 'minimum_nights', 'maximum_nights',
+       'minimum_minimum_nights', 'maximum_minimum_nights',
+       'minimum_maximum_nights', 'maximum_maximum_nights',
+       'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'number_of_reviews', 'number_of_reviews_ltm',
+       'number_of_reviews_l30d', 'first_review', 'last_review',
+       'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'host_image', 'image']
+  label_columns:
+    - price
+  image_columns:
+    - image
+    - host_image
+  # metric: rmse
+  metric: r2
+  problem_type: regression
+  # convert_to_log: True
+  convert_to_log: False
+
+
+seattle_airbnb_convert_to_log:
+  <<: *base
+  url: s3://automl-mm-bench/seattle_airbnb_processed.zip
+  sha1sum: 184d117c2d736c88847f29326fdcbccfec079eb4
+  train_file: train.csv
+  test_file: test.csv
+  feature_columns: ['name', 'description', 'neighborhood_overview',
+       'host_since', 'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_listings_count',
+       'host_total_listings_count', 'host_has_profile_pic',
+       'host_identity_verified', 'neighbourhood', 'neighbourhood_cleansed',
+       'neighbourhood_group_cleansed', 'latitude', 'longitude',
+       'property_type', 'room_type', 'accommodates', 'bathrooms', 'bedrooms',
+       'beds', 'amenities', 'minimum_nights', 'maximum_nights',
+       'minimum_minimum_nights', 'maximum_minimum_nights',
+       'minimum_maximum_nights', 'maximum_maximum_nights',
+       'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'number_of_reviews', 'number_of_reviews_ltm',
+       'number_of_reviews_l30d', 'first_review', 'last_review',
+       'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'host_image', 'image']
+  label_columns:
+    - price
+  image_columns:
+    - image
+    - host_image
+  # metric: rmse
+  metric: r2
+  problem_type: regression
+  convert_to_log: True
+  # convert_to_log: False
+
+zillow:
+  <<: *base
+  url: s3://automl-mm-bench/zillow_processed.zip
+  sha1sum: 587f1131054aef2de23a5761304d474d382218eb
+  train_file: train_processed.csv
+  test_file: test_processed.csv
+  feature_columns: null
+  label_columns:
+    - Sold Price
+  ignore_columns:
+    - Id
+    - Sold Price
+  image_columns:
+    - Images
+  metric: rmse
+  problem_type: regression
+  convert_to_log: True
+
+avito_demand_prediction_subset:
+  <<: *base
+  url: s3://automl-mm-bench/avito_demand_prediction_processed.zip
+  sha1sum: b17a88e2796d8853c73fda87a590ad2316c65239
+  train_file: train_processed.csv
+  test_file: test_processed.csv
+  data_folder: "avito_demand_prediction_processed"
+  train_subset: 100000
+  test_subset: 25000
+  feature_columns: null
+  label_columns:
+    - deal_probability
+  ignore_columns:
+    - item_id
+    - user_id
+  image_columns:
+    - image
+  metric: rmse
+  problem_type: regression
+
+gas:
+  <<: *base
+  feature_columns:
+    - Images
+    - MQ2
+    - MQ3
+    - MQ5
+    - MQ6
+    - MQ7
+    - MQ8
+    - MQ135
+  label_columns:
+    - Gas
+  image_columns:
+    - Images
+
+skin_cancer:
+  <<: *base
+  feature_columns:
+    - image_id
+    - dx_type
+    - age
+    - sex
+    - localization
+  label_columns:
+    - dx
+  image_columns:
+    - image_id
+
+goodreads:
+  <<: *base
+  feature_columns:
+    - bookformat
+    - desc
+    - genre
+    - img
+    - reviews
+    - title
+  label_columns:
+    - rating
+  image_columns:
+    - img
+  metric: r2
+  problem_type: regression
+  # metric: spearmanr
+
+goodreads_convert_to_log:
+  <<: *base
+  feature_columns:
+    - bookformat
+    - desc
+    - genre
+    - img
+    - reviews
+    - title
+  label_columns:
+    - rating
+  image_columns:
+    - img
+  metric: r2
+  problem_type: regression
+  convert_to_log: True
+
+crypto-coven:
+  <<: *base
+  # feature_columns: ['num_sales','name', 'description', 'Wonder', 'Skin Tone', 'Rising Sign',
+  #      'Eyebrows', 'Wisdom', 'Body Shape', 'Moon Sign', 'Will', 'Hair Color',
+  #      'Wit', 'Wiles', 'Necklace', 'Sun Sign', 'Eye Style', 'Eye Color',
+  #      'Mouth', 'Hat', 'Archetype of Power', 'Woe', 'Hair (Front)', 'Top',
+  #      'Hair (Back)', 'Background', 'Face Markings', 'Facewear', 'Hair Topper',
+  #      'Back Item', 'Earrings', 'Forehead Jewelry', 'Hair (Middle)', 'Mask',
+  #      'Outerwear',  'img']
+  # 把一些空列去掉
+  feature_columns: ['num_sales','name', 'description', 'Wonder', 'Skin Tone', 'Rising Sign',
+       'Wisdom', 'Body Shape', 'Moon Sign', 'Will',
+       'Wit', 'Wiles',  'Sun Sign', 'Eye Style', 'Eye Color',
+       'Mouth', 'Archetype of Power', 'Woe', 'Hair (Front)', 'Top',
+      'Background', 'img']
+  label_columns:
+    - sales_price
+  image_columns:
+    - img
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  # convert_to_log: True
+  convert_to_log: False
+
+crypto-coven_convert_to_log:
+  <<: *base
+  # feature_columns: ['num_sales','name', 'description', 'Wonder', 'Skin Tone', 'Rising Sign',
+  #      'Eyebrows', 'Wisdom', 'Body Shape', 'Moon Sign', 'Will', 'Hair Color',
+  #      'Wit', 'Wiles', 'Necklace', 'Sun Sign', 'Eye Style', 'Eye Color',
+  #      'Mouth', 'Hat', 'Archetype of Power', 'Woe', 'Hair (Front)', 'Top',
+  #      'Hair (Back)', 'Background', 'Face Markings', 'Facewear', 'Hair Topper',
+  #      'Back Item', 'Earrings', 'Forehead Jewelry', 'Hair (Middle)', 'Mask',
+  #      'Outerwear',  'img']
+  # 把一些空列去掉
+  feature_columns: ['num_sales','name', 'description', 'Wonder', 'Skin Tone', 'Rising Sign',
+       'Wisdom', 'Body Shape', 'Moon Sign', 'Will',
+       'Wit', 'Wiles',  'Sun Sign', 'Eye Style', 'Eye Color',
+       'Mouth', 'Archetype of Power', 'Woe', 'Hair (Front)', 'Top',
+      'Background', 'img']
+  label_columns:
+    - sales_price
+  image_columns:
+    - img
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  # convert_to_log: True
+  convert_to_log: True
+
+nike:
+  <<: *base
+  # train_file: train_no_null.csv
+  # test_file: test_no_null.csv
+  feature_columns:
+    - Product Name
+    - Listing Price
+    - Sale Price # 去掉sale price看看？因为没法直接对它进行log
+    # - Discount 因为discount恒为0，Brand恒为Nike，所以去掉
+    # - Brand
+    - Description
+    - Reviews
+    - img
+  label_columns:
+    - Rating
+  image_columns:
+    - img
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+CD18:
+  <<: *base
+  feature_columns:
+    - name
+    - Model
+    - Release Date
+    - Weigth
+    - os
+    - Storage
+    - hit
+    - hit_count
+    - display_size
+    - V_resolution
+    - H_resolution
+    - camera
+    - video
+    - prcessor
+    - ram
+    - Battery
+    - Battery_type
+    - img
+  label_columns:
+    - Price
+  image_columns:
+    - img
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+CD18_convert_to_log:
+  <<: *base
+  feature_columns:
+    - name
+    - Model
+    - Release Date
+    - Weigth
+    - os
+    - Storage
+    - hit
+    - hit_count
+    - display_size
+    - V_resolution
+    - H_resolution
+    - camera
+    - video
+    - prcessor
+    - ram
+    - Battery
+    - Battery_type
+    - img
+  label_columns:
+    - Price
+  image_columns:
+    - img
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  convert_to_log: True
+
+mocheg:
+  <<: *base
+  feature_columns:
+    - claim
+    - context
+    - image
+  label_columns:
+    - label
+  image_columns:
+    - image
+  train_file: train.csv
+  val_file: validation.csv
+  test_file: test.csv
+  splits:
+    - train
+    - validation
+    - test
+  metric: roc_auc
+  problem_type: binary
+
+# wikiart:
+#   <<: *base
+#   feature_columns:
+#     - file
+#     - artist
+#     - genre
+#   label_columns:
+#     - style
+#   image_columns:
+#     - file
+
+wikiart:
+  <<: *base
+  feature_columns:
+    - file
+    - genre
+    - style
+  label_columns:
+    - artist
+  image_columns:
+    - file
+
+DVM-CAR:
+  <<: *base
+  feature_columns:
+    - Maker
+    - Genmodel
+    - Adv_year
+    - Adv_month
+    - Color
+    - Reg_year
+    - Bodytype
+    - Runned_Miles
+    - Engin_size
+    - Gearbox
+    - Fuel_type
+    - Seat_num
+    - Door_num
+    - Image_name
+  label_columns:
+    - Price
+  image_columns:
+    - Image_name
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+DVM-CAR_convert_to_log:
+  <<: *base
+  feature_columns:
+    - Maker
+    - Genmodel
+    - Adv_year
+    - Adv_month
+    - Color
+    - Reg_year
+    - Bodytype
+    - Runned_Miles
+    - Engin_size
+    - Gearbox
+    - Fuel_type
+    - Seat_num
+    - Door_num
+    - Image_name
+  label_columns:
+    - Price
+  image_columns:
+    - Image_name
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  convert_to_log: True
+
+Memotion:
+  <<: *base
+  feature_columns:
+    - image_name
+    - text_corrected
+  label_columns:
+    - overall_sentiment
+  image_columns:
+    - image_name
+
+UPMC-Food101:
+  <<: *base
+  feature_columns:
+    - image
+    - text
+  label_columns:
+    - label
+  image_columns:
+    - image
+
+iqa:
+  <<: *base
+  feature_columns:
+    - text
+    - image
+  label_columns:
+    - label
+  image_columns:
+    - image
+  train_file: train.csv
+  val_file: validation.csv
+  test_file: test.csv
+  splits:
+    - train
+    - validation
+    - test
+  # metric: f1_macro
+  # loss_func: focal_loss
+  
+    
+snli-ve:
+  <<: *base
+  feature_columns:
+    - text
+    - image
+  label_columns:
+    - label
+  image_columns:
+    - image
+  train_file: train.csv
+  val_file: validation.csv
+  test_file: test.csv
+  splits:
+    - train
+    - validation
+    - test
+
+stylish-product:
+  <<: *base
+  feature_columns:
+    - id
+    - brand
+    - title
+    - sold_price
+  label_columns:
+    - actual_price
+  image_columns:
+    - id
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+stylish-product_convert_to_log:
+  <<: *base
+  feature_columns:
+    - id
+    - brand
+    - title
+    - sold_price
+  label_columns:
+    - actual_price
+  image_columns:
+    - id
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  convert_to_log: True
+
+amazon-books-reviews:
+  <<: *base
+  feature_columns:
+    - Title
+    - description
+    - authors
+    - image
+    - publisher
+    - publishedDate
+    - categories
+  label_columns:
+    - average_score
+  image_columns:
+    - image
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+KARD:
+  <<: *base
+  feature_columns:
+    - name
+    - studio
+    - genres
+    - type
+    - episodes
+    - episodes_duration
+    - age_rating
+    - in_clubs
+    - in_collections
+    - in_favorites
+    - status
+    - planned
+    - completed
+    - watching
+    - dropped
+    - on_hold
+    - ongoing_years
+    - release_date
+    - image
+  label_columns:
+    - score
+  image_columns:
+    - image
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+fashion-dataset:
+  <<: *base
+  feature_columns:
+    # - gender
+    # - articleType
+    # - baseColour
+    # - season
+    # - year
+    # - usage
+    # - productDisplayName
+    - image
+  label_columns:
+    - subCategory
+  image_columns:
+    - image
+  
+covid-chestxray-dataset:
+  <<: *base
+  feature_columns:
+    - offset
+    - sex
+    - age
+    - RT_PCR_positive
+    - survival
+    - intubated
+    - went_icu
+    - needed_supplemental_O2
+    - extubated
+    - temperature
+    - view
+    - modality
+    # - date
+    # - location
+    - filename
+    # - doi
+    # - url
+    # - license
+    - clinical_notes
+    - other_notes
+  label_columns:
+    - finding
+  image_columns:
+    - filename
+
+FALL-UP:
+  <<: *base
+  feature_columns:
+    - AnkleAccelerometer_x-axis
+    - AnkleAccelerometer_y-axis
+    - AnkleAccelerometer_z-axis
+    - AnkleAngularVelocity_x-axis
+    - AnkleAngularVelocity_y-axis
+    - AnkleAngularVelocity_z-axis
+    - AnkleLuminosity
+    - RightPocketAccelerometer_x-axis
+    - RightPocketAccelerometer_y-axis
+    - RightPocketAccelerometer_z-axis
+    - RightPocketAngularVelocity_x-axis
+    - RightPocketAngularVelocity_y-axis
+    - RightPocketAngularVelocity_z-axis
+    - RightPocketLuminosity
+    - BeltAccelerometer_x-axis
+    - BeltAccelerometer_y-axis
+    - BeltAccelerometer_z-axis
+    - BeltAngularVelocity_x-axis
+    - BeltAngularVelocity_y-axis
+    - BeltAngularVelocity_z-axis
+    - BeltLuminosity
+    - NeckAccelerometer_x-axis
+    - NeckAccelerometer_y-axis
+    - NeckAccelerometer_z-axis
+    - NeckAngularVelocity_x-axis
+    - NeckAngularVelocity_y-axis
+    - NeckAngularVelocity_z-axis
+    - NeckLuminosity
+    - WristAccelerometer_x-axis
+    - WristAccelerometer_y-axis
+    - WristAccelerometer_z-axis
+    - WristAngularVelocity_x-axis
+    - WristAngularVelocity_y-axis
+    - WristAngularVelocity_z-axis
+    - WristLuminosity
+    - BrainSensor
+    - Infrared1
+    - Infrared2
+    - Infrared3
+    - Infrared4
+    - Infrared5
+    - Infrared6
+    - img
+  label_columns:
+    - Activity
+  image_columns:
+    - img
+
+
+Fishpond:
+  <<: *base
+  feature_columns:
+    - Temp
+    - TDS
+    - pH
+    - images
+  label_columns:
+    - State
+  image_columns:
+    - images
+
+
+art-price-dataset:
+  <<: *base
+  feature_columns:
+    - images
+    - artist
+    - title
+    - yearCreation
+    - signed
+    - condition
+    - period
+    - movement
+  label_columns:
+    - price
+  image_columns:
+    - images
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+art-price-dataset_convert_to_log:
+  <<: *base
+  feature_columns:
+    - images
+    - artist
+    - title
+    - yearCreation
+    - signed
+    - condition
+    - period
+    - movement
+  label_columns:
+    - price
+  image_columns:
+    - images
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  convert_to_log: True
+  
+    
+Harumanis_mango:
+  <<: *base
+  feature_columns:
+    - Color_K-Yellow_P_Green
+    - Mass(kg)
+    - images
+  label_columns:
+    - Fruit Grade
+  image_columns:
+    - images
+
+CCD:
+  <<: *base
+  feature_columns:
+    - timing
+    - weather
+    - images
+  label_columns:
+    - egoinvolve
+  image_columns:
+    - images
+  metric: roc_auc
+  problem_type: binary
+
+price_lookup_codes:
+  <<: *base
+  feature_columns:
+    - size
+    - image
+  label_columns:
+    - commodity
+  image_columns:
+    - image
+
+ice-cream-dataset:
+  <<: *base
+  feature_columns:
+    - brand
+    - name
+    - description
+    - ingredients
+    - images
+  label_columns:
+    - rating
+  image_columns:
+    - images
+
+perfume:
+  <<: *base
+  feature_columns:
+    - Name
+    - Description
+    - Notes
+    - images
+  label_columns:
+    - Brand
+  image_columns:
+    - images
+
+action_effect_entailment:
+  <<: *base
+  feature_columns:
+    - action
+    - images
+  label_columns:
+    - label
+  image_columns:
+    - images
+  metric: roc_auc
+  problem_type: binary
+
+action_effect_pred:
+  <<: *base
+  feature_columns:
+    - descriptions
+    - images
+  label_columns:
+    - label
+  image_columns:
+    - images
+
+impressions_dataset:
+  <<: *base
+  feature_columns:
+    - image_description
+    - image_impression
+    # - image_aesthetic_eval
+    - images
+  label_columns:
+    - Impact
+  image_columns:
+    - images
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+
+
+
+_%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features: &cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features.zip
+  sha1sum: 41f930a1329b63ade7933cfa7839466e56ea6f06
+  train_file: train.csv
+  val_file: val.csv
+  test_file: test.csv
+  data_folder: "cpp_with_image_processed/%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features"
+  splits:
+    - train
+    - val
+    - test
+  train_subset: null
+  test_subset: null
+  feature_columns: null
+  label_columns:
+    - MEMBER
+  image_columns:
+    - image
+  ignore_columns:
+    - imageId
+    - marketplace_id
+    - item_id
+    - publisher_code
+    - signalData
+    - data_type
+    - class_name
+    - MODIFIED_AT
+  metric: coverage
+  problem_type: binary
+  convert_to_log: False
+
+_%SC%ProductSafety%EURsP%FR_Electronics_Pruning_Shrears_ML_TB:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%EURsP%FR_Electronics_Pruning_Shrears_ML_TB.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%EURsP%FR_Electronics_Pruning_Shrears_ML_TB
+
+_%SC%RestrictedProducts%Illegal%EG_Weapons_Firearm_Accessories:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%EG_Weapons_Firearm_Accessories.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%EG_Weapons_Firearm_Accessories
+
+_%SC%DIPC%UK%CE_General_Use_EU_Cables_without_Adapter:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%CE_General_Use_EU_Cables_without_Adapter.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%CE_General_Use_EU_Cables_without_Adapter
+
+_%SC%ProductSafety%Regulated%SG_Product_Assurance_Toys_Games_and_Sports_Activities_HR:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%SG_Product_Assurance_Toys_Games_and_Sports_Activities_HR.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%SG_Product_Assurance_Toys_Games_and_Sports_Activities_HR
+
+_%SC%RestrictedProducts%Illegal%Medical_Device_Electrosurgical_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Medical_Device_Electrosurgical_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Medical_Device_Electrosurgical_$folder$
+
+_%SC%DIPC%AU%Art_Supplies_General_Use_AU_Wooden_Pencils_Art_Supplies_General_Use:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%AU%Art_Supplies_General_Use_AU_Wooden_Pencils_Art_Supplies_General_Use.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%AU%Art_Supplies_General_Use_AU_Wooden_Pencils_Art_Supplies_General_Use
+
+_%SC%RestrictedProducts%Illegal%PL_Magnets_Buckyballs:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%PL_Magnets_Buckyballs.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%PL_Magnets_Buckyballs
+
+_%SC%RestrictedProducts%AmazonPolicy%IN_Improper_Listing_Of_Food_Suppress:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%IN_Improper_Listing_Of_Food_Suppress.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%IN_Improper_Listing_Of_Food_Suppress
+
+_%SC%RestrictedProducts%Illegal%Unapproved_Drug_Skin_Patches:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Unapproved_Drug_Skin_Patches.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Unapproved_Drug_Skin_Patches
+
+_%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_2:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_2.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_2
+
+_%SC%RestrictedProducts%Illegal%JP_Illegal_Obscene_Sex_Dolls_And_Toys_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%JP_Illegal_Obscene_Sex_Dolls_And_Toys_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%JP_Illegal_Obscene_Sex_Dolls_And_Toys_$folder$
+
+_%SC%ProductSafety%Regulated%CA_Product_Assurance_Free_Standing_Clothing_Storage_Units_V00_HR_New:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%CA_Product_Assurance_Free_Standing_Clothing_Storage_Units_V00_HR_New.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%CA_Product_Assurance_Free_Standing_Clothing_Storage_Units_V00_HR_New
+
+_%SC%RestrictedProducts%Regulated%CARB205_Exhaust_Header_Identification_ML_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%CARB205_Exhaust_Header_Identification_ML_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%CARB205_Exhaust_Header_Identification_ML_$folder$
+
+_%SC%DIPC%UK%Auto_General_Use_EU_Car_and_Car_Seat_Covers:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%Auto_General_Use_EU_Car_and_Car_Seat_Covers.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%Auto_General_Use_EU_Car_and_Car_Seat_Covers
+
+_%SC%ProductSafety%Regulated%CA_Product_Assurance_Gates_And_Enclosures_HR:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%CA_Product_Assurance_Gates_And_Enclosures_HR.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%CA_Product_Assurance_Gates_And_Enclosures_HR
+
+_%SC%ProductSafety%EURsP%FR_Electronics_Electrical_Housings_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%EURsP%FR_Electronics_Electrical_Housings_ML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%EURsP%FR_Electronics_Electrical_Housings_ML
+
+_%SC%RestrictedProducts%Illegal%UK_Cigarette_Novelty_Lighters:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%UK_Cigarette_Novelty_Lighters.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%UK_Cigarette_Novelty_Lighters
+
+_%SC%RestrictedProducts%Illegal%SA_Electronics_Two_Way_Radio:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%SA_Electronics_Two_Way_Radio.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%SA_Electronics_Two_Way_Radio
+
+_%SC%RestrictedProducts%AmazonPolicy%IT_Mystery_Boxes_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%IT_Mystery_Boxes_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%IT_Mystery_Boxes_ML
+
+_%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features_$folder$
+
+_%SC%DIPC%CA%Home_General_Use_US_CA_Subcat_Vacuum_Accessories_and_Replacement_Parts:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%Home_General_Use_US_CA_Subcat_Vacuum_Accessories_and_Replacement_Parts.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%Home_General_Use_US_CA_Subcat_Vacuum_Accessories_and_Replacement_Parts
+
+_%SC%ProductSafety%RecalledProducts%EU_Recalls_RFR_DE_LED_Christmas_Hat:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RecalledProducts%EU_Recalls_RFR_DE_LED_Christmas_Hat.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RecalledProducts%EU_Recalls_RFR_DE_LED_Christmas_Hat
+
+_%SC%ProductSafety%RecalledProducts%EU_Recalls_UK_Christmas_Dancing_Cactus:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RecalledProducts%EU_Recalls_UK_Christmas_Dancing_Cactus.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RecalledProducts%EU_Recalls_UK_Christmas_Dancing_Cactus
+
+_%SC%RestrictedProducts%Illegal%Auto_Motorcycle_Helmets_DOT:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Auto_Motorcycle_Helmets_DOT.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Auto_Motorcycle_Helmets_DOT
+
+_%SC%RestrictedProducts%Illegal%PL_Magnets_Buckyballs_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%PL_Magnets_Buckyballs_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%PL_Magnets_Buckyballs_$folder$
+
+_%SC%RestrictedProducts%Regulated%TR_Electronics_E-Mobility_Identify_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%TR_Electronics_E-Mobility_Identify_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%TR_Electronics_E-Mobility_Identify_ML
+
+_%SC%RestrictedProducts%AmazonPolicy%FR_Mystery_Boxes_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%FR_Mystery_Boxes_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%FR_Mystery_Boxes_ML
+
+_%SC%ProductSafety%UPSC%US_USPN_Laptop_Chargers_ML_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%US_USPN_Laptop_Chargers_ML_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%US_USPN_Laptop_Chargers_ML_Path
+
+_%SC%DIPC%CA%Apparel_Accessories_US_CA_ITK_Headwear_Adult:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%Apparel_Accessories_US_CA_ITK_Headwear_Adult.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%Apparel_Accessories_US_CA_ITK_Headwear_Adult
+
+_%SC%RestrictedProducts%Regulated%CARB205_Exhaust_Header_Identification_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%CARB205_Exhaust_Header_Identification_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%CARB205_Exhaust_Header_Identification_ML
+
+_%SC%DIPC%MX%Labeling_General_Rugs_Mats:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%MX%Labeling_General_Rugs_Mats.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%MX%Labeling_General_Rugs_Mats
+
+_%SC%ProductSafety%Illegal%IT_Product_Safety_Angle_Grinder_Chainsaw_Disc:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Illegal%IT_Product_Safety_Angle_Grinder_Chainsaw_Disc.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Illegal%IT_Product_Safety_Angle_Grinder_Chainsaw_Disc
+
+_%SC%RestrictedProducts%Illegal%EG_Weapons_Firearm_Accessories_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%EG_Weapons_Firearm_Accessories_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%EG_Weapons_Firearm_Accessories_$folder$
+
+_%SC%ProductSafety%RecalledProducts%EU_Recalls_RFR_FR_Kinderslot_Baby_lock:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RecalledProducts%EU_Recalls_RFR_FR_Kinderslot_Baby_lock.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RecalledProducts%EU_Recalls_RFR_FR_Kinderslot_Baby_lock
+
+_%SC%DIPC%UK%Jewelry_General_Use_Precious_EU_Jewelry_Precious_General_Use:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%Jewelry_General_Use_Precious_EU_Jewelry_Precious_General_Use.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%Jewelry_General_Use_Precious_EU_Jewelry_Precious_General_Use
+
+_%SC%RestrictedProducts%Regulated%DE_Electronics_E-Mobility_Identify_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%DE_Electronics_E-Mobility_Identify_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%DE_Electronics_E-Mobility_Identify_ML
+
+_%SC%ProductSafety%UPSC%UK_UKPN_Costume_Sets_ML_Path_Website_Compliance:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%UK_UKPN_Costume_Sets_ML_Path_Website_Compliance.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%UK_UKPN_Costume_Sets_ML_Path_Website_Compliance
+
+_%SC%RestrictedProducts%AmazonPolicy%SE_Currency_Legal_Tender_Yen:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%SE_Currency_Legal_Tender_Yen.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%SE_Currency_Legal_Tender_Yen
+
+_%SC%RestrictedProducts%Illegal%DE_Fireworks_Fire_Extinguisher_Ball_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%DE_Fireworks_Fire_Extinguisher_Ball_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%DE_Fireworks_Fire_Extinguisher_Ball_$folder$
+
+_%SC%RestrictedProducts%Illegal%Medical_Device_Electrosurgical:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Medical_Device_Electrosurgical.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Medical_Device_Electrosurgical
+
+_%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_9_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_9_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_9_$folder$
+
+_%SC%RestrictedProducts%GatedProducts%TR_Medical_Devices_Launch_PTs_ID:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%GatedProducts%TR_Medical_Devices_Launch_PTs_ID.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%GatedProducts%TR_Medical_Devices_Launch_PTs_ID
+
+_%SC%DIPC%CA%Textiles_General_Use_US_CA_Textile_Table_Runners_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%Textiles_General_Use_US_CA_Textile_Table_Runners_ML.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%Textiles_General_Use_US_CA_Textile_Table_Runners_ML
+
+_%SC%RestrictedProducts%Illegal%Auto_Tuner_Claims_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Auto_Tuner_Claims_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Auto_Tuner_Claims_$folder$
+
+_%SC%ProductSafety%Regulated%IN_Product_Assurance_Toys_Games_And_Puzzles_AutoML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%IN_Product_Assurance_Toys_Games_And_Puzzles_AutoML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%IN_Product_Assurance_Toys_Games_And_Puzzles_AutoML
+
+_%SC%DIPC%CA%BISS_General_Use_US_CA_Raw_Materials_General_Use:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%BISS_General_Use_US_CA_Raw_Materials_General_Use.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%BISS_General_Use_US_CA_Raw_Materials_General_Use
+
+_%SC%ProductSafety%UPSC%US_USPN_Squishy_Toys_ML_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%US_USPN_Squishy_Toys_ML_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%US_USPN_Squishy_Toys_ML_Path
+
+_%SC%RestrictedProducts%AmazonPolicy%PLNT_Christmas_Trees_1:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%PLNT_Christmas_Trees_1.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%PLNT_Christmas_Trees_1
+
+_%SC%ProductSafety%EURsP%DE_Electronics_Hygrometer_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%EURsP%DE_Electronics_Hygrometer_ML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%EURsP%DE_Electronics_Hygrometer_ML
+
+_%SC%ProductSafety%UPSC%AU_Baby_Feeding_ML_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%AU_Baby_Feeding_ML_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%AU_Baby_Feeding_ML_Path
+
+_%SC%RestrictedProducts%AmazonPolicy%ES_Mystery_Boxes_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%ES_Mystery_Boxes_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%ES_Mystery_Boxes_ML
+
+_%SC%RestrictedProducts%Illegal%SA_Sexual_Wellness_Products_ALL:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%SA_Sexual_Wellness_Products_ALL.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%SA_Sexual_Wellness_Products_ALL
+
+_%SC%DIPC%CA%DVDs_US_CA_ITK_Magic_DVDs_General_Use:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%DVDs_US_CA_ITK_Magic_DVDs_General_Use.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%DVDs_US_CA_ITK_Magic_DVDs_General_Use
+
+_%SC%RestrictedProducts%Illegal%Auto_Tuner_Claims:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Auto_Tuner_Claims.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Auto_Tuner_Claims
+
+_%SC%RestrictedProducts%Illegal%UK_Weapons_Knives_Missing_CRT_Flag_SfT_HR_No_Policy_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%UK_Weapons_Knives_Missing_CRT_Flag_SfT_HR_No_Policy_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%UK_Weapons_Knives_Missing_CRT_Flag_SfT_HR_No_Policy_$folder$
+
+_%SC%ProductSafety%UPSC%ES_ESPN_Padded_Crib_Bumpers_ML_No_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%ES_ESPN_Padded_Crib_Bumpers_ML_No_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%ES_ESPN_Padded_Crib_Bumpers_ML_No_Path
+
+_%SC%RestrictedProducts%IllegallyMkted%UK_Weapons_Commando_Knives_SfT_No_Policy_ML_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%UK_Weapons_Commando_Knives_SfT_No_Policy_ML_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%IllegallyMkted%UK_Weapons_Commando_Knives_SfT_No_Policy_ML_$folder$
+
+_%SC%DIPC%UK%Feeding_Bottle_Nipples_Infant_EU_ITK_Baby_Bottle_Nipples_Infant:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%Feeding_Bottle_Nipples_Infant_EU_ITK_Baby_Bottle_Nipples_Infant.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%Feeding_Bottle_Nipples_Infant_EU_ITK_Baby_Bottle_Nipples_Infant
+
+_%SC%RestrictedProducts%GatedProducts%Textile_Bamboo_Retail_Removal:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%GatedProducts%Textile_Bamboo_Retail_Removal.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%GatedProducts%Textile_Bamboo_Retail_Removal
+
+_%SC%RestrictedProducts%GatedProducts%ES_Corrective_Contact_Lenses_Gating_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%GatedProducts%ES_Corrective_Contact_Lenses_Gating_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%GatedProducts%ES_Corrective_Contact_Lenses_Gating_ML
+
+_%SC%RestrictedProducts%Regulated%TR_Electronics_E-Mobility_Identify_ML_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%TR_Electronics_E-Mobility_Identify_ML_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%TR_Electronics_E-Mobility_Identify_ML_$folder$
+
+_%SC%ProductSafety%Regulated%JP_Product_Assurance_Toys_Lawn_and_Gardening_Sets_and_Tool_kits_Playground_Equipment_AutoML2:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%JP_Product_Assurance_Toys_Lawn_and_Gardening_Sets_and_Tool_kits_Playground_Equipment_AutoML2.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%JP_Product_Assurance_Toys_Lawn_and_Gardening_Sets_and_Tool_kits_Playground_Equipment_AutoML2
+
+_%SC%DIPC%JP%MEDIA_General_Use_JP_GL_DVD:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%JP%MEDIA_General_Use_JP_GL_DVD.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%JP%MEDIA_General_Use_JP_GL_DVD
+
+_%SC%ProductSafety%RecalledProducts%EU_Recalls_ES_Christmas_Dancing_Cactus:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RecalledProducts%EU_Recalls_ES_Christmas_Dancing_Cactus.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RecalledProducts%EU_Recalls_ES_Christmas_Dancing_Cactus
+
+_%SC%RestrictedProducts%Illegal%Unapproved_Drug_Skin_Patches_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Unapproved_Drug_Skin_Patches_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Unapproved_Drug_Skin_Patches_$folder$
+
+_%SC%ProductSafety%RegulatoryEngagement%US_Multiple_BathroomShelves:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RegulatoryEngagement%US_Multiple_BathroomShelves.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RegulatoryEngagement%US_Multiple_BathroomShelves
+
+_%SC%DIPC%SG%SG_Cosmetics_General_Use_SG_Mouthwash_Toothpaste_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%SG%SG_Cosmetics_General_Use_SG_Mouthwash_Toothpaste_ML.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%SG%SG_Cosmetics_General_Use_SG_Mouthwash_Toothpaste_ML
+
+_%SC%ProductSafety%UPSC%ES_ESPN_Beaded_Teethers_ML_No_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%ES_ESPN_Beaded_Teethers_ML_No_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%ES_ESPN_Beaded_Teethers_ML_No_Path
+
+_%SC%RestrictedProducts%Illegal%UK_Weapons_Knives_Missing_CRT_Flag_SfT_HR_No_Policy:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%UK_Weapons_Knives_Missing_CRT_Flag_SfT_HR_No_Policy.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%UK_Weapons_Knives_Missing_CRT_Flag_SfT_HR_No_Policy
+
+_%SC%ProductSafety%Regulated%CA_Product_Assurance_Childrens_Jewellery_AutoML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%CA_Product_Assurance_Childrens_Jewellery_AutoML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%CA_Product_Assurance_Childrens_Jewellery_AutoML
+
+_%SC%ProductSafety%Regulated%UK_Product_Assurance_Toys_Ride_Ons_HR:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%UK_Product_Assurance_Toys_Ride_Ons_HR.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%UK_Product_Assurance_Toys_Ride_Ons_HR
+
+_%SC%ProductSafety%UPSC%AU_Sunglasses_ML_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%AU_Sunglasses_ML_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%AU_Sunglasses_ML_Path
+
+_%SC%RestrictedProducts%Illegal%CA_Medical_Device_Hearing_Aids_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%CA_Medical_Device_Hearing_Aids_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%CA_Medical_Device_Hearing_Aids_$folder$
+
+_%SC%ProductSafety%UPSC%CA_Car_Seat_Heating_Pads_ML_No_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%CA_Car_Seat_Heating_Pads_ML_No_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%CA_Car_Seat_Heating_Pads_ML_No_Path
+
+_%SC%ProductSafety%RecalledProducts%EU_Recalls_ATD_ES_Mermaid_tail:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RecalledProducts%EU_Recalls_ATD_ES_Mermaid_tail.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RecalledProducts%EU_Recalls_ATD_ES_Mermaid_tail
+
+_%SC%DIPC%UK%Apparel_General_Use_EU_ITK_Apparel_Adult:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%Apparel_General_Use_EU_ITK_Apparel_Adult.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%Apparel_General_Use_EU_ITK_Apparel_Adult
+
+_%SC%RestrictedProducts%GatedProducts%Softlines_Fur_Baby_Outdoor_Sports_Retail_Removal:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%GatedProducts%Softlines_Fur_Baby_Outdoor_Sports_Retail_Removal.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%GatedProducts%Softlines_Fur_Baby_Outdoor_Sports_Retail_Removal
+
+_%SC%DIPC%CA%General_Use_US_CA_Garden_Tools_Wooden_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%General_Use_US_CA_Garden_Tools_Wooden_ML.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%General_Use_US_CA_Garden_Tools_Wooden_ML
+
+_%SC%DIPC%CA%General_Use_US_CA_Self_Locking_Security_Seals_Tags_General_Use_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%General_Use_US_CA_Self_Locking_Security_Seals_Tags_General_Use_ML.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%General_Use_US_CA_Self_Locking_Security_Seals_Tags_General_Use_ML
+
+_%SC%ProductSafety%UPSC%PL_Padded_Crib_Bumpers_KW_No_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%PL_Padded_Crib_Bumpers_KW_No_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%PL_Padded_Crib_Bumpers_KW_No_Path
+
+_%SC%ProductSafety%Regulated%FR_Toys_Kitchen_Food_AutoML_PA:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%FR_Toys_Kitchen_Food_AutoML_PA.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%FR_Toys_Kitchen_Food_AutoML_PA
+
+_%SC%ProductSafety%Regulated%FR_Product_Assurance_Toys_Balloons_and_Party_Toys_HRE:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%FR_Product_Assurance_Toys_Balloons_and_Party_Toys_HRE.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%FR_Product_Assurance_Toys_Balloons_and_Party_Toys_HRE
+
+_%SC%RestrictedProducts%IllegallyMkted%UK_Tobacco_E-Cigarettes_Without_Flag_Suppress_SfT_HR_No_Policy_ML_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%UK_Tobacco_E-Cigarettes_Without_Flag_Suppress_SfT_HR_No_Policy_ML_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%IllegallyMkted%UK_Tobacco_E-Cigarettes_Without_Flag_Suppress_SfT_HR_No_Policy_ML_$folder$
+
+_%SC%ProductSafety%UPSC%US_USPN_Childrens_Jewelry_KW_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%US_USPN_Childrens_Jewelry_KW_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%US_USPN_Childrens_Jewelry_KW_Path
+
+_%SC%RestrictedProducts%Illegal%DE_Fireworks_Fire_Extinguisher_Ball:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%DE_Fireworks_Fire_Extinguisher_Ball.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%DE_Fireworks_Fire_Extinguisher_Ball
+
+_%SC%RestrictedProducts%Regulated%BR_Medical_Devices_Tattoo_Equipment_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%BR_Medical_Devices_Tattoo_Equipment_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%BR_Medical_Devices_Tattoo_Equipment_$folder$
+
+_%SC%ProductSafety%Regulated%US_Product_Assurance_Trampolines_HR:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%US_Product_Assurance_Trampolines_HR.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%US_Product_Assurance_Trampolines_HR
+
+_%SC%RestrictedProducts%Illegal%SA_Electronics_Two_Way_Radio_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%SA_Electronics_Two_Way_Radio_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%SA_Electronics_Two_Way_Radio_$folder$
+
+_%SC%ProductSafety%UPSC%MX_Lithiumn_Cylindrical_Battery_Cell_KW_No_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%MX_Lithiumn_Cylindrical_Battery_Cell_KW_No_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%MX_Lithiumn_Cylindrical_Battery_Cell_KW_No_Path
+
+_%SC%ProductSafety%Regulated%FR_Toys_Dolls_Dollhouses_and_Accessories_AutoML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%FR_Toys_Dolls_Dollhouses_and_Accessories_AutoML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%FR_Toys_Dolls_Dollhouses_and_Accessories_AutoML
+
+_%SC%RestrictedProducts%Illegal%CA_Medical_Device_Hearing_Aids:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%CA_Medical_Device_Hearing_Aids.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%CA_Medical_Device_Hearing_Aids
+
+_%SC%RestrictedProducts%AmazonPolicy%Weapons_Stun_Gun:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%Weapons_Stun_Gun.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%Weapons_Stun_Gun
+
+_%SC%ProductSafety%RecalledProducts%AE_Product_Safety_Self_Balancing_Scooters:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%RecalledProducts%AE_Product_Safety_Self_Balancing_Scooters.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%RecalledProducts%AE_Product_Safety_Self_Balancing_Scooters
+
+_%SC%RestrictedProducts%AmazonPolicy%TR_Sex_Products_Erotic_Dices_Cards:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%TR_Sex_Products_Erotic_Dices_Cards.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%TR_Sex_Products_Erotic_Dices_Cards
+
+_%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_2_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_2_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_2_$folder$
+
+_%SC%RestrictedProducts%IllegallyMkted%UK_Weapons_Commando_Knives_SfT_No_Policy_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%UK_Weapons_Commando_Knives_SfT_No_Policy_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%IllegallyMkted%UK_Weapons_Commando_Knives_SfT_No_Policy_ML
+
+_%SC%ProductSafety%Regulated%JP_Product_Assurance_Toys_Art_and_Craft_AutoML2:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%JP_Product_Assurance_Toys_Art_and_Craft_AutoML2.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%JP_Product_Assurance_Toys_Art_and_Craft_AutoML2
+
+_%SC%RestrictedProducts%Illegal%SA_Sexual_Wellness_Products_ALL_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%SA_Sexual_Wellness_Products_ALL_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%SA_Sexual_Wellness_Products_ALL_$folder$
+
+_%SC%RestrictedProducts%Illegal%JP_Illegal_Obscene_Sex_Dolls_And_Toys:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%JP_Illegal_Obscene_Sex_Dolls_And_Toys.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%JP_Illegal_Obscene_Sex_Dolls_And_Toys
+
+_%SC%RestrictedProducts%AmazonPolicy%Drug_Paraphernalia_Marijuana_Grinders:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%Drug_Paraphernalia_Marijuana_Grinders.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%Drug_Paraphernalia_Marijuana_Grinders
+
+_%SC%RestrictedProducts%AmazonPolicy%DE_Party_Liquor:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%DE_Party_Liquor.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%DE_Party_Liquor
+
+_%SC%DIPC%CA%Consumer_Electrical_Products_US_CA_Electrical_Vacuum_Sealers_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%CA%Consumer_Electrical_Products_US_CA_Electrical_Vacuum_Sealers_ML.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%CA%Consumer_Electrical_Products_US_CA_Electrical_Vacuum_Sealers_ML
+
+_%SC%ProductSafety%Regulated%US_Product_Assurance_Carriages_And_Strollers_HR:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%US_Product_Assurance_Carriages_And_Strollers_HR.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%US_Product_Assurance_Carriages_And_Strollers_HR
+
+_%SC%RestrictedProducts%IllegallyMkted%UK_Tobacco_E-Cigarettes_Without_Flag_Suppress_SfT_HR_No_Policy_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%UK_Tobacco_E-Cigarettes_Without_Flag_Suppress_SfT_HR_No_Policy_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%IllegallyMkted%UK_Tobacco_E-Cigarettes_Without_Flag_Suppress_SfT_HR_No_Policy_ML
+
+_%SC%ProductSafety%Regulated%AU_Product_Assurance_Toy_Action_Figures_And_Dolls_AutoML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%Regulated%AU_Product_Assurance_Toy_Action_Figures_And_Dolls_AutoML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%Regulated%AU_Product_Assurance_Toy_Action_Figures_And_Dolls_AutoML
+
+_%SC%RestrictedProducts%Illegal%UK_Cigarette_Novelty_Lighters_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%UK_Cigarette_Novelty_Lighters_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%UK_Cigarette_Novelty_Lighters_$folder$
+
+_%SC%ProductSafety%EURsP%IT_Electronics_Electric_Blanket_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%EURsP%IT_Electronics_Electric_Blanket_ML.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%EURsP%IT_Electronics_Electric_Blanket_ML
+
+_%SC%RestrictedProducts%GatedProducts%Textile_Bamboo_Antimicrobial_Retail_Removal_Clothing_ML:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%GatedProducts%Textile_Bamboo_Antimicrobial_Retail_Removal_Clothing_ML.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%GatedProducts%Textile_Bamboo_Antimicrobial_Retail_Removal_Clothing_ML
+
+_%SC%ProductSafety%UPSC%SG_SGPN_Standalone_Power_Banks_ML_Path:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%ProductSafety%UPSC%SG_SGPN_Standalone_Power_Banks_ML_Path.zip
+  data_folder: cpp_with_image_processed/%SC%ProductSafety%UPSC%SG_SGPN_Standalone_Power_Banks_ML_Path
+
+_%SC%RestrictedProducts%Regulated%BR_Medical_Devices_Tattoo_Equipment:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%BR_Medical_Devices_Tattoo_Equipment.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%BR_Medical_Devices_Tattoo_Equipment
+
+_%SC%DIPC%UK%General_Use_EU_Masonry_Floats:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%General_Use_EU_Masonry_Floats.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%General_Use_EU_Masonry_Floats
+
+_%SC%DIPC%UK%Chemicals_Unsupported_EU_Self_Inking_Stamps:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%DIPC%UK%Chemicals_Unsupported_EU_Self_Inking_Stamps.zip
+  data_folder: cpp_with_image_processed/%SC%DIPC%UK%Chemicals_Unsupported_EU_Self_Inking_Stamps
+
+_%SC%RestrictedProducts%Regulated%DE_Electronics_E-Mobility_Identify_ML_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%DE_Electronics_E-Mobility_Identify_ML_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%DE_Electronics_E-Mobility_Identify_ML_$folder$
+
+_%SC%RestrictedProducts%AmazonPolicy%BE_Sex_Products_Realistic_Sex_Dolls_FRKW:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%BE_Sex_Products_Realistic_Sex_Dolls_FRKW.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%BE_Sex_Products_Realistic_Sex_Dolls_FRKW
+
+_%SC%RestrictedProducts%Illegal%Currency_US_Paper_Currency_$folder$:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Currency_US_Paper_Currency_$folder$.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Currency_US_Paper_Currency_$folder$
+
+_%SC%RestrictedProducts%AmazonPolicy%UK_Animals_Fur_Products_Rabbit_II:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%AmazonPolicy%UK_Animals_Fur_Products_Rabbit_II.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%AmazonPolicy%UK_Animals_Fur_Products_Rabbit_II
+
+_%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_9:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_9.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Regulated%IN_Class_A_NSNM_Medical_Devices_9
+
+_%SC%RestrictedProducts%Illegal%Currency_US_Paper_Currency:
+  <<: *cpp_with_image_base
+  url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%Illegal%Currency_US_Paper_Currency.zip
+  data_folder: cpp_with_image_processed/%SC%RestrictedProducts%Illegal%Currency_US_Paper_Currency
