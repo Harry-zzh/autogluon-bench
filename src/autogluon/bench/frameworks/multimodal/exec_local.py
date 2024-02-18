@@ -81,8 +81,10 @@ def get_args():
     parser.add_argument(
         "--text_trivial_aug_maxscale", type=float, default=0.0, help="Text input aug."
     )
+    parser.add_argument(
+        "--not_use_image_aug", type=bool, default=True,
+    )
 
-    
     args = parser.parse_args()
     return args
 
@@ -337,6 +339,8 @@ if __name__ == "__main__":
 
     # Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
+    if args.not_use_image_aug == False:
+        args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
 
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
