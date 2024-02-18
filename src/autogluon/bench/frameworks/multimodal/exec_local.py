@@ -71,11 +71,15 @@ def get_args():
     parser.add_argument(
         "--resume", action="store_true", default=False
     )
-
     
     ### Converting Tabular Data into Text
     parser.add_argument(
         "--categorical_convert_to_text", type=bool, default=True, help="convert categorical columns to text or not."
+    )
+
+    ### Data Aug
+    parser.add_argument(
+        "--text_trivial_aug_maxscale", type=float, default=0.0, help="Text input aug."
     )
 
     
@@ -330,7 +334,10 @@ if __name__ == "__main__":
 
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
-    
+
+    # Data Aug
+    args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
+
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
