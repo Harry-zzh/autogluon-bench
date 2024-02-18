@@ -89,10 +89,14 @@ def get_args():
     parser.add_argument(
         "--resume", action="store_true", default=False
     )
+    parser.add_argument(
+        "--text_trivial_aug_maxscale", type=float, default=0.0
+    )
 
     parser.add_argument(
         "--ft_transformer_ckpt_name", action="store_true", default=False
     )
+
 
     
     args = parser.parse_args()
@@ -369,6 +373,7 @@ if __name__ == "__main__":
 
     if args.ft_transformer_ckpt_name:
         args.params['hyperparameters']['model.ft_transformer.checkpoint_name'] = "https://automl-mm-bench.s3.amazonaws.com/ft_transformer_pretrained_ckpt/iter_2k.ckpt"
+    args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
