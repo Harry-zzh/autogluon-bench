@@ -91,7 +91,10 @@ def get_args():
     )
     parser.add_argument(
         "--not_use_image_aug", action='store_false', default=True,
+    )    parser.add_argument(
+        "--text_trivial_aug_maxscale", type=float, default=0.0
     )
+
     # 
     
 
@@ -364,6 +367,7 @@ if __name__ == "__main__":
     # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
+    args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
