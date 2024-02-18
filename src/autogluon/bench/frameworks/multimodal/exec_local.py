@@ -90,6 +90,8 @@ def get_args():
         "--resume", action="store_true", default=False
     )
     parser.add_argument(
+        "--not_use_image_aug", action='store_false', default=True,
+    )    parser.add_argument(
         "--text_trivial_aug_maxscale", type=float, default=0.0
     )
 
@@ -378,6 +380,8 @@ if __name__ == "__main__":
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
+    if args.not_use_image_aug == False:
+        args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
     
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
