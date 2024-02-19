@@ -71,6 +71,14 @@ def get_args():
     parser.add_argument(
         "--resume", action="store_true", default=False
     )
+
+    ### Multimodal Fusion Strategies
+    parser.add_argument(
+        "--use_fusion_transformer", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--early_fusion", action="store_true", default=False
+    )
     
     ### Converting Tabular Data into Text
     parser.add_argument(
@@ -84,7 +92,7 @@ def get_args():
     parser.add_argument(
         "--not_use_image_aug", type=bool, default=True,
     )
-
+    
     args = parser.parse_args()
     return args
 
@@ -334,14 +342,26 @@ if __name__ == "__main__":
     args.params['hyperparameters']["optimization.gradient_clip_val"] = args.gradient_clip_val
     args.params['hyperparameters']["optimization.top_k_average_method"] = args.top_k_average_method
 
+    ### Multimodal Fusion Strategies
+    if args.use_fusion_transformer:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_transformer']
+    
+    else:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
+    
+    if args.early_fusion:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_metatransformer']
+        for model_name in args.params['hyperparameters']['model.names']:
+            args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
+
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
 
-    # Data Aug
+    ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
     if args.not_use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
-
+    
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
