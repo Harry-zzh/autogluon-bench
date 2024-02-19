@@ -231,20 +231,17 @@ art-price-dataset:
   <<: *base
   feature_columns:
     - images
+    - price
     - artist
     - title
     - yearCreation
     - signed
     - condition
     - period
-    - movement
   label_columns:
-    - price
+    - movement
   image_columns:
     - images
-  problem_type: regression
-  # metric: spearmanr
-  metric: r2
 
 seattle_airbnb:
   <<: *base
