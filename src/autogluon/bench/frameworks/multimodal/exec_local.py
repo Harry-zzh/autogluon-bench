@@ -91,7 +91,8 @@ def get_args():
     )
     parser.add_argument(
         "--not_use_image_aug", action='store_false', default=True,
-    )    parser.add_argument(
+    )    
+    parser.add_argument(
         "--text_trivial_aug_maxscale", type=float, default=0.0
     )
 

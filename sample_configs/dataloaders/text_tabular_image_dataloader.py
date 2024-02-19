@@ -96,9 +96,14 @@ class TextTabularImageDataLoader:
         
         if self.dataset_config["convert_to_log"]:
             print("convert_to_log ...")
-            for label_col in self.label_columns:
-                self.data = self.data.loc[self.data[label_col] > 0]
-                self.data[label_col] = np.log(self.data[label_col])
+            if dataset_name == "nike":
+                for label_col in ["Listing Price", "Sale Price"]:
+                    self.data = self.data.loc[self.data[label_col] > 0]
+                    self.data[label_col] = np.log(self.data[label_col])
+            else:
+                for label_col in self.label_columns:
+                    self.data = self.data.loc[self.data[label_col] > 0]
+                    self.data[label_col] = np.log(self.data[label_col])
 
         # filter data
         use_all_images_datasets = ["id_change_detection", "grocery_image"]

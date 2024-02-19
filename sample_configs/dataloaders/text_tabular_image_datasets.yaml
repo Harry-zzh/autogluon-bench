@@ -469,6 +469,28 @@ nike:
   # metric: spearmanr
   metric: r2
 
+nike_convert_to_log:
+  <<: *base
+  # train_file: train_no_null.csv
+  # test_file: test_no_null.csv
+  feature_columns:
+    - Product Name
+    - Listing Price
+    - Sale Price # 去掉sale price看看？因为没法直接对它进行log
+    # - Discount 因为discount恒为0，Brand恒为Nike，所以去掉
+    # - Brand
+    - Description
+    - Reviews
+    - img
+  label_columns:
+    - Rating
+  image_columns:
+    - img
+  problem_type: regression
+  # metric: spearmanr
+  metric: r2
+  convert_to_log: True
+
 CD18:
   <<: *base
   feature_columns:
@@ -866,24 +888,42 @@ Fishpond:
     - images
 
 
+# art-price-dataset:
+#   <<: *base
+#   feature_columns:
+#     - images
+#     - artist
+#     - title
+#     - yearCreation
+#     - signed
+#     - condition
+#     - period
+#     - movement
+#   label_columns:
+#     - price
+#   image_columns:
+#     - images
+#   problem_type: regression
+#   # metric: spearmanr
+#   metric: r2
+
+
 art-price-dataset:
   <<: *base
   feature_columns:
     - images
+    - price
     - artist
     - title
     - yearCreation
     - signed
     - condition
     - period
-    - movement
   label_columns:
-    - price
+    - movement
   image_columns:
     - images
-  problem_type: regression
-  # metric: spearmanr
-  metric: r2
+
 
 art-price-dataset_convert_to_log:
   <<: *base
