@@ -58,14 +58,14 @@ class TextTabularImageDataLoader:
         protected_zip_extraction(download_file_path, sha1_hash=self.sha1sum, folder=self.local_dir())
 
         if split == 'train':
-            self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["train_file"]))
+            self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["train_file"]), sep=self.dataset_config['sep'])
             if self.dataset_config["train_subset"]:
                 num_sample = self.dataset_config["train_subset"]
                 self.data = self.data.iloc[:num_sample]
         elif split == 'validation':
-            self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["val_file"]))
+            self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["val_file"]), sep=self.dataset_config['sep'])
         elif split == 'test':
-            self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["test_file"]))
+            self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["test_file"]), sep=self.dataset_config['sep'])
             if self.dataset_config["test_subset"]:
                 num_sample = self.dataset_config["test_subset"]
                 self.data = self.data.iloc[:num_sample]
