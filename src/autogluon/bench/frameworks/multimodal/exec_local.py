@@ -101,6 +101,12 @@ def get_args():
     )
 
 
+    parser.add_argument(
+        "--use_fusion_transformer", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--early_fusion", action="store_true", default=False
+    )
     
     args = parser.parse_args()
     return args
@@ -282,8 +288,8 @@ def run(
     if custom_metrics is not None and custom_metrics["function_name"] == train_data.metric:
         metrics_func = load_custom_metrics(custom_metrics=custom_metrics)
 
-    if train_data.loss_func is not None:
-        params['hyperparameters']['optimization.loss_function'] = train_data.loss_func
+    # if train_data.loss_func is not None:
+    #     params['hyperparameters']['optimization.loss_function'] = train_data.loss_func
 
     predictor = MultiModalPredictor(**predictor_args)
 
@@ -383,7 +389,17 @@ if __name__ == "__main__":
 
     if args.use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
+    if args.use_fusion_transformer:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_transformer']
     
+    else:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
+    
+    if args.early_fusion:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_metatransformer']
+        for model_name in args.params['hyperparameters']['model.names']:
+            args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
+    # print(args.params['hyperparameters']['model.names'])
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
