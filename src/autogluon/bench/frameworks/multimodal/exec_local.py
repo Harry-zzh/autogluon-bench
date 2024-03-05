@@ -90,7 +90,7 @@ def get_args():
         "--resume", action="store_true", default=False
     )
     parser.add_argument(
-        "--not_use_image_aug", action='store_false', default=True,
+        "--use_image_aug", action='store_false', default=True,
     )    
     parser.add_argument(
         "--text_trivial_aug_maxscale", type=float, default=0.0
@@ -106,6 +106,9 @@ def get_args():
     )
     parser.add_argument(
         "--early_fusion", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
     )
     
     args = parser.parse_args()
@@ -387,7 +390,7 @@ if __name__ == "__main__":
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
-    if args.not_use_image_aug == False:
+    if args.use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
     if args.use_fusion_transformer:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_transformer']
@@ -400,6 +403,11 @@ if __name__ == "__main__":
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
     # print(args.params['hyperparameters']['model.names'])
+
+    if args.clip_fusion_mlp:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
+        
+
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
