@@ -92,6 +92,9 @@ def get_args():
     parser.add_argument(
         "--not_use_image_aug", type=bool, default=True,
     )
+    parser.add_argument(
+        "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
+    )
     
     args = parser.parse_args()
     return args
@@ -353,6 +356,9 @@ if __name__ == "__main__":
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_metatransformer']
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
+
+    if args.clip_fusion_mlp:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
 
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
