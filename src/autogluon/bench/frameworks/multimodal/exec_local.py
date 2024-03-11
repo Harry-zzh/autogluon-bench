@@ -66,6 +66,9 @@ def get_args():
         "--warmup_steps", type=float, default=0.1
     )
     parser.add_argument(
+        "--max_epochs", type=int, default=10, help="num of training epochs."
+    )
+    parser.add_argument(
         "--lr_decay", type=float, default=0.9, help="It is used only when lr_choice is layerwise_decay"
     )
     parser.add_argument(
@@ -77,12 +80,21 @@ def get_args():
         "--use_fusion_transformer", action="store_true", default=False
     )
     parser.add_argument(
+        "--fusion_transformer_concat_all_tokens", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
+    )
+    parser.add_argument(
         "--early_fusion", action="store_true", default=False
     )
     
     ### Converting Tabular Data into Text
     parser.add_argument(
         "--categorical_convert_to_text", type=bool, default=True, help="convert categorical columns to text or not."
+    )
+    parser.add_argument(
+        "--categorical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
     )
 
     ### Data Aug
@@ -92,10 +104,7 @@ def get_args():
     parser.add_argument(
         "--not_use_image_aug", type=bool, default=True,
     )
-    parser.add_argument(
-        "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
-    )
-    
+
     args = parser.parse_args()
     return args
 
@@ -348,7 +357,9 @@ if __name__ == "__main__":
     ### Multimodal Fusion Strategies
     if args.use_fusion_transformer:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_transformer']
-    
+        if args.fusion_transformer_concat_all_tokens:
+            args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
+            args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
@@ -362,6 +373,7 @@ if __name__ == "__main__":
 
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
+    args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
 
     ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
