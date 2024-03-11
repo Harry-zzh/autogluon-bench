@@ -75,6 +75,9 @@ def get_args():
         "--categorical_convert_to_text", action='store_false', default=True, help="convert categorical columns to text or not."
     )
     parser.add_argument(
+        "--categorical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
+    )
+    parser.add_argument(
         "--max_epochs", type=int, default=10, help="num of training epochs."
     )
     parser.add_argument(
@@ -103,6 +106,9 @@ def get_args():
 
     parser.add_argument(
         "--use_fusion_transformer", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--fusion_transformer_concat_all_tokens", action="store_true", default=False
     )
     parser.add_argument(
         "--early_fusion", action="store_true", default=False
@@ -382,6 +388,7 @@ if __name__ == "__main__":
     args.params['hyperparameters']["optimization.top_k_average_method"] = args.top_k_average_method
     args.params['hyperparameters']["optimization.efficient_finetune"] = args.peft
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
+    args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
     args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
     # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
@@ -398,7 +405,9 @@ if __name__ == "__main__":
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
     if args.use_fusion_transformer:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_transformer']
-    
+        if args.fusion_transformer_concat_all_tokens:
+            args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
+            args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
