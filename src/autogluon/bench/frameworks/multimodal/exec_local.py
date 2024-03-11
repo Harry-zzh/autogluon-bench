@@ -110,6 +110,10 @@ def get_args():
     parser.add_argument(
         "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
     )
+    parser.add_argument(
+        "--clip_best_quality", action="store_true", default=False, help="Use clip best quality"
+    )
+    
     
     args = parser.parse_args()
     return args
@@ -407,7 +411,8 @@ if __name__ == "__main__":
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
         
-
+    if args.clip_best_quality:
+        args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14-336"
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
