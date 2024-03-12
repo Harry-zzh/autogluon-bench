@@ -120,6 +120,22 @@ def get_args():
         "--clip_best_quality", action="store_true", default=False, help="Use clip best quality"
     )
     
+    parser.add_argument(
+        "--clip_high_quality", action="store_true", default=False, help="Use clip high quality"
+    )
+
+    parser.add_argument(
+        "--use_different_lr_for_each_modality", action="store_true", default=False, 
+    )
+    parser.add_argument(
+        "--image_lr",  type=float, default=0.0
+    )
+    parser.add_argument(
+        "--text_lr",  type=float, default=0.0
+    )
+    parser.add_argument(
+        "--tabular_lr",  type=float, default=0.0
+    ) 
     
     args = parser.parse_args()
     return args
@@ -422,6 +438,15 @@ if __name__ == "__main__":
         
     if args.clip_best_quality:
         args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14-336"
+        args.params['hyperparameters']["model.clip_fusion_mlp.image_size"] = 336
+    if args.clip_high_quality:
+        args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14"
+
+    if args.use_different_lr_for_each_modality:
+        args.params['hyperparameters']["optimization.image_lr"] = args.image_lr
+        args.params['hyperparameters']["optimization.text_lr"] = args.text_lr
+        args.params['hyperparameters']["optimization.tabular_lr"] = args.tabular_lr
+
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
