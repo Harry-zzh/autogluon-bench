@@ -99,6 +99,9 @@ def get_args():
     parser.add_argument(
         "--categorical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
     )
+    parser.add_argument(
+        "--numerical_convert_to_text", action='store_true', default=False, help="convert numerical columns to text or not."
+    )
 
     ### Data Aug
     parser.add_argument(
@@ -374,9 +377,12 @@ if __name__ == "__main__":
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
         if args.clip_high_quality:
             args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14"
+
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
+    args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
+    args.params['hyperparameters']["data.numerical.convert_to_text_use_header"] = args.numerical_convert_to_text_use_header
 
     ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
