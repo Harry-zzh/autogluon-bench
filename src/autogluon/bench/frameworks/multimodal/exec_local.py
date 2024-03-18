@@ -137,6 +137,13 @@ def get_args():
         "--tabular_lr",  type=float, default=0.0
     ) 
     
+    parser.add_argument(
+        "--numerical_convert_to_text", action='store_true', default=False, help="convert numerical columns to text or not."
+    )
+    parser.add_argument(
+        "--numerical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
+    )
+
     args = parser.parse_args()
     return args
 
@@ -405,6 +412,8 @@ if __name__ == "__main__":
     args.params['hyperparameters']["optimization.efficient_finetune"] = args.peft
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
+    args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
+    args.params['hyperparameters']["data.numerical.convert_to_text_use_header"] = args.numerical_convert_to_text_use_header
     args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
     # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
