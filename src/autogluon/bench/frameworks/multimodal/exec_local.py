@@ -114,6 +114,9 @@ def get_args():
         "--early_fusion", action="store_true", default=False
     )
     parser.add_argument(
+        "--sequential_fusion", action="store_true", default=False
+    )
+    parser.add_argument(
         "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
     )
     parser.add_argument(
@@ -451,6 +454,11 @@ if __name__ == "__main__":
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
     # print(args.params['hyperparameters']['model.names'])
+
+    if args.sequential_fusion:
+        args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'sequential_fusion_mlp']
+        for model_name in args.params['hyperparameters']['model.names']:
+            args.params['hyperparameters'][f'model.{model_name}.sequential_fusion'] = True
 
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
