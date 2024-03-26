@@ -144,6 +144,16 @@ def get_args():
         "--numerical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
     )
 
+    parser.add_argument(
+        "--use_image_only", action='store_true', default=False,
+    )
+    parser.add_argument(
+        "--use_text_only", action='store_true', default=False,
+    )
+    parser.add_argument(
+        "--use_tabular_only", action='store_true', default=False,
+    )
+
     args = parser.parse_args()
     return args
 
@@ -455,6 +465,13 @@ if __name__ == "__main__":
         args.params['hyperparameters']["optimization.image_lr"] = args.image_lr
         args.params['hyperparameters']["optimization.text_lr"] = args.text_lr
         args.params['hyperparameters']["optimization.tabular_lr"] = args.tabular_lr
+
+    if args.use_image_only:
+        args.params['use_image_only'] = args.use_image_only
+    if args.use_text_only:
+        args.params['use_text_only'] = args.use_text_only
+    if args.use_tabular_only:
+        args.params['use_tabular_only'] = args.use_tabular_only
 
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
