@@ -145,6 +145,11 @@ def get_args():
     parser.add_argument(
         "--numerical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
     )
+    parser.add_argument(
+        "--max_text_len", type=int, default=512, help="max text length."
+    )
+
+    
 
     args = parser.parse_args()
     return args
@@ -420,6 +425,8 @@ if __name__ == "__main__":
     # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
+
+    args.params['hyperparameters']['model.hf_text.max_text_len'] = args.max_text_len
 
     if args.ft_transformer_ckpt_name:
         args.params['hyperparameters']['model.ft_transformer.checkpoint_name'] = "https://automl-mm-bench.s3.amazonaws.com/ft_transformer_pretrained_ckpt/iter_2k.ckpt"
