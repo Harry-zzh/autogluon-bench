@@ -54,6 +54,9 @@ def get_args():
     parser.add_argument(
         "--lr", type=float, default=0.0001
     )
+    parser.add_argument(
+        "--auxiliary_weight", type=float, default=0., help="auxiliary loss weight for unimodal models."
+    )
 
     ### Basic Tricks
     parser.add_argument(
@@ -113,6 +116,9 @@ def get_args():
     parser.add_argument(
         "--not_use_image_aug", type=bool, default=True,
     )
+
+    
+
     args = parser.parse_args()
     return args
 
@@ -363,11 +369,13 @@ if __name__ == "__main__":
     args.params['hyperparameters']["optimization.top_k_average_method"] = args.top_k_average_method
 
     ### Multimodal Fusion Strategies
+    use_default_fusion = True # use MLP as fusion module
     if args.use_fusion_transformer:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_transformer']
         if args.fusion_transformer_concat_all_tokens:
             args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
             args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
+        use_default_fusion = False
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
@@ -375,16 +383,26 @@ if __name__ == "__main__":
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_metatransformer']
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
+        use_default_fusion = False
 
     if args.sequential_fusion:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'sequential_fusion_mlp']
+        if args.auxiliary_weight != 0.1: # 0.1是默认的，把所有有weight这个参数的model都设置一下。
+            args.params['hyperparameters']["model.sequential_fusion_mlp.weight"] = args.auxiliary_weight
+            # args.params['hyperparameters']["model.sequential_fusion_mlp.weight"] = args.auxiliary_weight
+    
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.sequential_fusion'] = True
+        use_default_fusion = False
 
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
         if args.clip_high_quality:
             args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14"
+        use_default_fusion = False
+    if use_default_fusion:
+        if args.auxiliary_weight != 0.1:
+            args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
 
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
