@@ -149,6 +149,9 @@ def get_args():
     parser.add_argument(
         "--max_text_len", type=int, default=512, help="max text length."
     )
+    parser.add_argument(
+        "--auxiliary_weight", type=float, default=0.1, help="auxiliary loss weight for unimodal models."
+    )
 
     
 
@@ -446,6 +449,8 @@ if __name__ == "__main__":
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
+    use_default_fusion = True # 使用默认的fusion方式
+
     if args.use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
     if args.use_fusion_transformer:
@@ -453,6 +458,7 @@ if __name__ == "__main__":
         if args.fusion_transformer_concat_all_tokens:
             args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
             args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
+        use_default_fusion = False
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
@@ -460,16 +466,23 @@ if __name__ == "__main__":
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_metatransformer']
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
+        use_default_fusion = False
     # print(args.params['hyperparameters']['model.names'])
 
     if args.sequential_fusion:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'sequential_fusion_mlp']
+        if args.auxiliary_weight != 0.1: # 0.1是默认的，把所有有weight这个参数的model都设置一下。
+            args.params['hyperparameters']["model.sequential_fusion_mlp.weight"] = args.auxiliary_weight
+            # args.params['hyperparameters']["model.sequential_fusion_mlp.weight"] = args.auxiliary_weight
+    
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.sequential_fusion'] = True
+        use_default_fusion = False
 
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
-        
+        use_default_fusion = False
+
     if args.clip_best_quality:
         args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14-336"
         args.params['hyperparameters']["model.clip_fusion_mlp.image_size"] = 336
@@ -488,6 +501,10 @@ if __name__ == "__main__":
     if args.use_tabular_only:
         args.params['use_tabular_only'] = args.use_tabular_only
 
+    if use_default_fusion:
+        if args.auxiliary_weight != 0.1:
+            args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
+  
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
