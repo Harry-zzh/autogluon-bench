@@ -7,13 +7,15 @@ import os
 import time
 from datetime import datetime
 from typing import Optional, Union
-
+import pandas as pd
 from autogluon.bench.datasets.dataset_registry import multimodal_dataset_registry
 from autogluon_local.core.src.autogluon.core.metrics import make_scorer
 from autogluon_local.multimodal.src.autogluon.multimodal import MultiModalPredictor
 from autogluon_local.multimodal.src.autogluon.multimodal import __version__ as ag_version
 from autogluon_local.multimodal.src.autogluon.multimodal.constants import IMAGE_SIMILARITY, IMAGE_TEXT_SIMILARITY, OBJECT_DETECTION, TEXT_SIMILARITY
 import yaml
+from autogluon_local.multimodal.src.autogluon.multimodal.models.utils import get_pretrained_tokenizer
+import numpy as np
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -122,6 +124,7 @@ def get_args():
     parser.add_argument(
         "--clip_best_quality", action="store_true", default=False, help="Use clip best quality"
     )
+    
     parser.add_argument(
         "--clip_high_quality", action="store_true", default=False, help="Use clip high quality"
     )
@@ -152,7 +155,24 @@ def get_args():
         "--auxiliary_weight", type=float, default=0.1, help="auxiliary loss weight for unimodal models."
     )
 
+    parser.add_argument(
+        "--get_dataset_info", action='store_true', default=False, help="get dataset information."
+    )
+    parser.add_argument(
+        "--seed", type=int, default=0,
+    )
+
     
+
+    parser.add_argument(
+        "--use_image_only", action='store_true', default=False,
+    )
+    parser.add_argument(
+        "--use_text_only", action='store_true', default=False,
+    )
+    parser.add_argument(
+        "--use_tabular_only", action='store_true', default=False,
+    )
 
     args = parser.parse_args()
     return args
@@ -339,65 +359,199 @@ def run(
 
     predictor = MultiModalPredictor(**predictor_args)
 
-    fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
+    get_dataset_info = params.pop("get_dataset_info")
 
-    utc_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-    if eval_model_path != None:
-        predictor = predictor.load(eval_model_path)
-        training_duration = 0.
+    if get_dataset_info:
+
+        def get_data_info(train_data, label_col): # 虽然形参名是train_data，但是并不是说只能传train data
+            train_tokens = {} # 
+            train_null_tokens = 0
+            for index, row in train_data.data.iterrows():
+                for col_name in train_data.data.columns:
+                    if col_name == label_col or 'image' in col_name: continue
+                    col_text = row[col_name]
+                    # if column_types[col_name] != 'text':
+                    #     continue
+                    if pd.isna(col_text):
+                        col_text  = ""
+                        train_null_tokens += 1
+                        # continue
+                    col_tokens = tokenizer.encode(
+                        str(col_text),
+                        add_special_tokens=False,
+                        truncation=False,
+                    )
+                    if index not in train_tokens:
+                        train_tokens[index] = {}
+                    # train_tokens[index] += (len(col_tokens) + 1)  # 统计每一行的text总长度
+                    if column_types[col_name] not in train_tokens[index]:
+                        train_tokens[index][column_types[col_name]] = 0 # 每种类型都需要统计一下长度
+                    train_tokens[index][column_types[col_name]] += (len(col_tokens) + 1) 
+            return train_tokens, train_null_tokens
+
+        def get_text_len(data_tokens): # 得到拼接后的text长度
+            col_types = ['text', 'categorical', 'numerical',]
+            res_dict = {} # 记录每个col type下，seq len的相关信息
+
+            text_seq_len = []
+            cat_seq_len = []
+            num_seq_len = []
+
+            for col_type in col_types:
+                if col_type not in data_tokens[0]: # 不存在这一列
+                    continue
+                seq_len = []
+                for i in range(len(data_tokens)):
+                    seq_len.append(data_tokens[i][col_type])
+                max_seq_len = max(seq_len)
+                min_seq_len = min(seq_len) 
+                if col_type == 'text': text_seq_len = seq_len
+                elif col_type == 'categorical': cat_seq_len = seq_len
+                else: num_seq_len = seq_len
+
+                res_dict[col_type] = {}
+                res_dict[col_type]["max_seq_len"] = max_seq_len
+                res_dict[col_type]["min_seq_len"] = min_seq_len
+                a = sum([i > 512 for i in seq_len])
+                res_dict[col_type]["greater_than_512_ratio"] = f"{a}({np.around( a / len(seq_len) * 100, 2)}\%)"
+
+            # 开始进行text和categorical长度的合并
+            col_name = "Text"
+            cur_list = text_seq_len
+            if(len(cat_seq_len)): # 如果存在categorical列
+                cur_list = [cur_list[i] + cat_seq_len[i] for i in range(len(cur_list))]
+                col_name += "+Cate"
+                res_dict[col_name] = {}
+                res_dict[col_name]["max_seq_len"] = max(cur_list)
+                res_dict[col_name]["min_seq_len"] = min(cur_list)
+                a = sum([i > 512 for i in cur_list])
+                res_dict[col_name]["greater_than_512_ratio"] = f"{a}({np.around( a / len(cur_list) * 100, 2)}\%)"
+            else:
+                col_name += "+Cate"
+                res_dict[col_name] = {}
+                res_dict[col_name]["max_seq_len"] = "/"
+                res_dict[col_name]["min_seq_len"] = "/"
+                res_dict[col_name]["greater_than_512_ratio"] = "/"
+
+            if (len(num_seq_len)): # 如果存在numerical列
+                cur_list = [cur_list[i] + num_seq_len[i] for i in range(len(cur_list))]
+                col_name += "+Num"
+                res_dict[col_name] = {}
+                res_dict[col_name]["max_seq_len"] = max(cur_list)
+                res_dict[col_name]["min_seq_len"] = min(cur_list)
+                a = sum([i > 512 for i in cur_list])
+                res_dict[col_name]["greater_than_512_ratio"] =  f"{a}({np.around( a / len(cur_list) * 100, 2)}\%)"
+            else:
+                col_name += "+Num"
+                res_dict[col_name] = {}
+                res_dict[col_name]["max_seq_len"] = "/"
+                res_dict[col_name]["min_seq_len"] = "/"
+                res_dict[col_name]["greater_than_512_ratio"] = "/"
+
+            return res_dict
+
+        predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
+        column_types = []
+        predictor._learner.infer_column_types(column_types=column_types)
+        # 输出当前数据的col types
+        column_types = predictor._learner._column_types
+
+        img_num = sum('image' in v for v in column_types.values())
+        text_num = sum('text' in v for v in column_types.values())
+        cal_num = sum(v == 'categorical' for v in column_types.values())
+        numer_num = sum(v == 'numerical' for v in column_types.values())
+
+        if column_types[label_column] == 'categorical': cal_num -= 1
+        if column_types[label_column] == 'text': text_num -= 1
+        if column_types[label_column] == 'numerical': numer_num -= 1
+
+
+        tokenizer = get_pretrained_tokenizer(
+            tokenizer_name="hf_auto", # 
+            checkpoint_name='microsoft/deberta-v3-base', # 
+            use_fast=True,
+        )
+
+        # 获取基本信息
+        train_tokens, train_null_tokens = get_data_info(train_data, label_column)
+        test_tokens, test_null_tokens = get_data_info(test_data, label_column)
+
+        # 获取拼接后的text长度
+
+        train_res_dict = get_text_len(train_tokens)
+        test_res_dict = get_text_len(test_tokens)
+            
+
+        print("dataset_name: ", dataset_name)
+        # print("Dataset ID & #Train & #Test & #Img. & #Text. & #Cat. & #Num. & #Train Text Len. > 512 & #Train Text Len. <= 512 & #Test Text Len. > 512 & #Test Text Len. <= 512")
+        # print(f"{dataset_name} & {len(train_data.data)} & {len(test_data.data)} & {img_num} & {text_num} & {cal_num} & {numer_num} & {max_train_512_num} & {min_train_512_num} & {max_test_512_num} & {min_test_512_num} ")
+        # 这里的text len是拼接过后的长度。
+        print("Dataset ID & \#Train & \#Test & \#Img. & \#Text. & \#Cat. & \#Num. "
+              "& Train Max T Len. & Train Min T Len. & \#Train T Len. \\textgreater 512 & \#Train T+C Len. \\textgreater 512 & \#Train T+C+N Len. \\textgreater 512 "
+              "& Test Max T Len. & Test Min T Len. & \#Test T Len. \\textgreater 512 & \#Test T+C Len. \\textgreater 512 & \#Test T+C+N Len. \\textgreater 512 ")
+        print(f"{dataset_name} & {len(train_data.data)} & {len(test_data.data)} & {img_num} & {text_num} & {cal_num} & {numer_num} "
+              f"& {train_res_dict['text']['max_seq_len']} & {train_res_dict['text']['min_seq_len']} & {train_res_dict['text']['greater_than_512_ratio']} & {train_res_dict['Text+Cate']['greater_than_512_ratio']}  & {train_res_dict['Text+Cate+Num']['greater_than_512_ratio']} "
+              f"& {test_res_dict['text']['max_seq_len']} & {test_res_dict['text']['min_seq_len']} & {test_res_dict['text']['greater_than_512_ratio']} & {test_res_dict['Text+Cate']['greater_than_512_ratio']} & {test_res_dict['Text+Cate+Num']['greater_than_512_ratio']} ")
     else:
-        if resume:
-            predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) # 如果不写resume = True，就会加载这个ckpt后从epoch 0开始训练。
-        start_time = time.time()
-        predictor.fit(**fit_args)
-        end_time = time.time()
-        training_duration = round(end_time - start_time, 1)
+        fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
 
-    if isinstance(test_data.data, dict):  # multiple test datasets
-        test_data_dict = test_data.data
-
-    else:
-        test_data_dict = {dataset_name: test_data}
-
-    for dataset_name, test_data in test_data_dict.items():
-        evaluate_args = {
-            "data": test_data.data,
-            "label": label_column,
-            "metrics": test_data.metric if metrics_func is None else metrics_func,
-        }
-
-        if test_data.problem_type == IMAGE_TEXT_SIMILARITY:
-            evaluate_args["query_data"] = test_data.data[test_data.text_columns[0]].unique().tolist()
-            evaluate_args["response_data"] = test_data.data[test_data.image_columns[0]].unique().tolist()
-            evaluate_args["cutoffs"] = [1, 5, 10]
-
-        start_time = time.time()
-        scores = predictor.evaluate(**evaluate_args)
-        end_time = time.time()
-        predict_duration = round(end_time - start_time, 1)
-
-        if "#" in framework:
-            framework, version = framework.split("#")
+        utc_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+        if eval_model_path != None:
+            predictor = predictor.load(eval_model_path)
+            training_duration = 0.
         else:
-            framework, version = framework, ag_version
+            if resume:
+                predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) # 如果不写resume = True，就会加载这个ckpt后从epoch 0开始训练。
+            start_time = time.time()
+            predictor.fit(**fit_args)
+            end_time = time.time()
+            training_duration = round(end_time - start_time, 1)
 
-        metric_name = test_data.metric if metrics_func is None else metrics_func.name
-        metrics = {
-            "id": "id/0",  # dummy id to make it align with amlb benchmark output
-            "task": dataset_name,
-            "framework": framework,
-            "constraint": constraint,
-            "version": version,
-            "fold": 0,
-            "type": predictor.problem_type,
-            "metric": metric_name,
-            "utc": utc_time,
-            "training_duration": training_duration,
-            "predict_duration": predict_duration,
-            "scores": scores,
-        }
-        subdir = f"{framework}.{dataset_name}.{constraint}.local"
-        save_metrics(os.path.join(metrics_dir, subdir, "scores"), metrics)
+        if isinstance(test_data.data, dict):  # multiple test datasets
+            test_data_dict = test_data.data
+
+        else:
+            test_data_dict = {dataset_name: test_data}
+
+        for dataset_name, test_data in test_data_dict.items():
+            evaluate_args = {
+                "data": test_data.data,
+                "label": label_column,
+                "metrics": test_data.metric if metrics_func is None else metrics_func,
+            }
+
+            if test_data.problem_type == IMAGE_TEXT_SIMILARITY:
+                evaluate_args["query_data"] = test_data.data[test_data.text_columns[0]].unique().tolist()
+                evaluate_args["response_data"] = test_data.data[test_data.image_columns[0]].unique().tolist()
+                evaluate_args["cutoffs"] = [1, 5, 10]
+
+            start_time = time.time()
+            scores = predictor.evaluate(**evaluate_args)
+            end_time = time.time()
+            predict_duration = round(end_time - start_time, 1)
+
+            if "#" in framework:
+                framework, version = framework.split("#")
+            else:
+                framework, version = framework, ag_version
+
+            metric_name = test_data.metric if metrics_func is None else metrics_func.name
+            metrics = {
+                "id": "id/0",  # dummy id to make it align with amlb benchmark output
+                "task": dataset_name,
+                "framework": framework,
+                "constraint": constraint,
+                "version": version,
+                "fold": 0,
+                "type": predictor.problem_type,
+                "metric": metric_name,
+                "utc": utc_time,
+                "training_duration": training_duration,
+                "predict_duration": predict_duration,
+                "scores": scores,
+            }
+            subdir = f"{framework}.{dataset_name}.{constraint}.local"
+            save_metrics(os.path.join(metrics_dir, subdir, "scores"), metrics)
 
 
 if __name__ == "__main__":
@@ -428,6 +582,8 @@ if __name__ == "__main__":
     # args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
+    args.params['get_dataset_info'] = args.get_dataset_info
+    args.params['seed'] = args.seed
 
     args.params['hyperparameters']['model.hf_text.max_text_len'] = args.max_text_len
 
@@ -482,6 +638,13 @@ if __name__ == "__main__":
         args.params['hyperparameters']["optimization.image_lr"] = args.image_lr
         args.params['hyperparameters']["optimization.text_lr"] = args.text_lr
         args.params['hyperparameters']["optimization.tabular_lr"] = args.tabular_lr
+
+    if args.use_image_only:
+        args.params['use_image_only'] = args.use_image_only
+    if args.use_text_only:
+        args.params['use_text_only'] = args.use_text_only
+    if args.use_tabular_only:
+        args.params['use_tabular_only'] = args.use_tabular_only
 
     if use_default_fusion:
         if args.auxiliary_weight != 0.1:
