@@ -368,7 +368,7 @@ def run(
             train_null_tokens = 0
             for index, row in train_data.data.iterrows():
                 for col_name in train_data.data.columns:
-                    if col_name == label_col or 'image' in col_name: continue
+                    if col_name == label_col or 'image' in column_types[col_name]: continue
                     col_text = row[col_name]
                     # if column_types[col_name] != 'text':
                     #     continue
@@ -399,10 +399,19 @@ def run(
 
             for col_type in col_types:
                 if col_type not in data_tokens[0]: # 不存在这一列
+                    res_dict[col_type] = {}
+                    res_dict[col_type]["max_seq_len"] = "/"
+                    res_dict[col_type]["min_seq_len"] = "/"
+                    res_dict[col_type]["greater_than_512_ratio"] = "/"
                     continue
                 seq_len = []
+                
                 for i in range(len(data_tokens)):
-                    seq_len.append(data_tokens[i][col_type])
+                    try:
+                        seq_len.append(data_tokens[i][col_type])
+                    except Exception:
+                        print(f"第{i}行无法读取。") # 因为有一些行读不出来，可能会导致i不存在
+                        continue
                 max_seq_len = max(seq_len)
                 min_seq_len = min(seq_len) 
                 if col_type == 'text': text_seq_len = seq_len
@@ -417,10 +426,19 @@ def run(
 
             # 开始进行text和categorical长度的合并
             col_name = "Text"
-            cur_list = text_seq_len
+            cur_list = None
+
+            if(len(text_seq_len)):
+                if cur_list == None:
+                    cur_list = text_seq_len
+                    
             if(len(cat_seq_len)): # 如果存在categorical列
-                cur_list = [cur_list[i] + cat_seq_len[i] for i in range(len(cur_list))]
                 col_name += "+Cate"
+                if cur_list == None:
+                    cur_list = cat_seq_len
+                else:
+                    cur_list = [cur_list[i] + cat_seq_len[i] for i in range(len(cur_list))]
+                    
                 res_dict[col_name] = {}
                 res_dict[col_name]["max_seq_len"] = max(cur_list)
                 res_dict[col_name]["min_seq_len"] = min(cur_list)
@@ -434,8 +452,12 @@ def run(
                 res_dict[col_name]["greater_than_512_ratio"] = "/"
 
             if (len(num_seq_len)): # 如果存在numerical列
-                cur_list = [cur_list[i] + num_seq_len[i] for i in range(len(cur_list))]
                 col_name += "+Num"
+                if cur_list == None:
+                    cur_list = num_seq_len
+                else:
+                    cur_list = [cur_list[i] + num_seq_len[i] for i in range(len(cur_list))]
+                
                 res_dict[col_name] = {}
                 res_dict[col_name]["max_seq_len"] = max(cur_list)
                 res_dict[col_name]["min_seq_len"] = min(cur_list)
@@ -492,6 +514,7 @@ def run(
         print(f"{dataset_name} & {len(train_data.data)} & {len(test_data.data)} & {img_num} & {text_num} & {cal_num} & {numer_num} "
               f"& {train_res_dict['text']['max_seq_len']} & {train_res_dict['text']['min_seq_len']} & {train_res_dict['text']['greater_than_512_ratio']} & {train_res_dict['Text+Cate']['greater_than_512_ratio']}  & {train_res_dict['Text+Cate+Num']['greater_than_512_ratio']} "
               f"& {test_res_dict['text']['max_seq_len']} & {test_res_dict['text']['min_seq_len']} & {test_res_dict['text']['greater_than_512_ratio']} & {test_res_dict['Text+Cate']['greater_than_512_ratio']} & {test_res_dict['Text+Cate+Num']['greater_than_512_ratio']} ")
+        return
     else:
         fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
 
