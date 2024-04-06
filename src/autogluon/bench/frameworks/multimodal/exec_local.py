@@ -72,6 +72,9 @@ def get_args():
         "--warmup_steps", type=float, default=0.1
     )
     parser.add_argument(
+        "--categorical_convert_to_text_use_header_template",type=str, default="list"
+    )
+    parser.add_argument(
         "--max_epochs", type=int, default=10, help="num of training epochs."
     )
     parser.add_argument(
@@ -110,6 +113,9 @@ def get_args():
     )
     parser.add_argument(
         "--numerical_convert_to_text", action='store_true', default=False, help="convert numerical columns to text or not."
+    )
+    parser.add_argument(
+        "--no_hf_text_insert_sep",action='store_false', default=True,
     )
 
     ### Data Aug
@@ -410,8 +416,11 @@ if __name__ == "__main__":
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
+    args.params['hyperparameters']["data.categorical.convert_to_text_use_header_template"] = args.categorical_convert_to_text_use_header_template
+    if args.categorical_convert_to_text_use_header_template == "latex":
+        assert args.no_hf_text_insert_sep == False
+        args.params['hyperparameters']["model.hf_text.insert_sep"] = False 
     args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
-    args.params['hyperparameters']["data.numerical.convert_to_text_use_header"] = args.numerical_convert_to_text_use_header
 
     ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
