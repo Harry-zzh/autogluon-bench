@@ -684,10 +684,10 @@ if __name__ == "__main__":
     if use_default_fusion:
         if args.auxiliary_weight != 0.1:
             args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
+        print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
-    print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
     # ['framework']['params']
 
     if args.custom_metrics is not None:
