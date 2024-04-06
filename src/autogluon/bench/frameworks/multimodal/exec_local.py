@@ -80,6 +80,9 @@ def get_args():
         "--categorical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
     )
     parser.add_argument(
+        "--categorical_convert_to_text_use_header_template",type=str, default="list"
+    )
+    parser.add_argument(
         "--max_epochs", type=int, default=10, help="num of training epochs."
     )
     parser.add_argument(
@@ -173,6 +176,11 @@ def get_args():
     parser.add_argument(
         "--use_tabular_only", action='store_true', default=False,
     )
+
+    parser.add_argument(
+        "--no_hf_text_insert_sep",action='store_false', default=True,
+    )
+    
 
     args = parser.parse_args()
     return args
@@ -599,6 +607,10 @@ if __name__ == "__main__":
     args.params['hyperparameters']["optimization.efficient_finetune"] = args.peft
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
+    args.params['hyperparameters']["data.categorical.convert_to_text_use_header_template"] = args.categorical_convert_to_text_use_header_template
+    if args.categorical_convert_to_text_use_header_template == "latex":
+        assert args.no_hf_text_insert_sep == False
+        args.params['hyperparameters']["model.hf_text.insert_sep"] = False 
     args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
     args.params['hyperparameters']["data.numerical.convert_to_text_use_header"] = args.numerical_convert_to_text_use_header
     args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
@@ -649,7 +661,7 @@ if __name__ == "__main__":
 
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
-        use_default_fusion = False
+        # use_default_fusion = False
 
     if args.clip_best_quality:
         args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14-336"
@@ -675,6 +687,7 @@ if __name__ == "__main__":
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
+    print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
     # ['framework']['params']
 
     if args.custom_metrics is not None:
