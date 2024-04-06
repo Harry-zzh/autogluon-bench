@@ -661,7 +661,7 @@ if __name__ == "__main__":
 
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
-        use_default_fusion = False
+        # use_default_fusion = False
 
     if args.clip_best_quality:
         args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14-336"
@@ -687,6 +687,7 @@ if __name__ == "__main__":
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
+    print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
     # ['framework']['params']
 
     if args.custom_metrics is not None:
