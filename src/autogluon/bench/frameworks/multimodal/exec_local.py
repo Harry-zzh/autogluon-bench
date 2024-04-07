@@ -608,8 +608,10 @@ if __name__ == "__main__":
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header_template"] = args.categorical_convert_to_text_use_header_template
-    if args.categorical_convert_to_text_use_header_template == "latex":
-        assert args.no_hf_text_insert_sep == False
+    # if args.categorical_convert_to_text_use_header_template == "latex":
+    #     assert args.no_hf_text_insert_sep == False
+    #     args.params['hyperparameters']["model.hf_text.insert_sep"] = False 
+    if  args.no_hf_text_insert_sep == False:
         args.params['hyperparameters']["model.hf_text.insert_sep"] = False 
     args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
     args.params['hyperparameters']["data.numerical.convert_to_text_use_header"] = args.numerical_convert_to_text_use_header
@@ -684,7 +686,7 @@ if __name__ == "__main__":
     if use_default_fusion:
         if args.auxiliary_weight != 0.1:
             args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
-        print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
+            print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
