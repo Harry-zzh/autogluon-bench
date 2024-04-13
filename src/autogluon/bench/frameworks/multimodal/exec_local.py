@@ -16,6 +16,7 @@ from autogluon_local.multimodal.src.autogluon.multimodal.constants import IMAGE_
 import yaml
 from autogluon_local.multimodal.src.autogluon.multimodal.models.utils import get_pretrained_tokenizer
 import numpy as np
+from PIL import Image
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -418,7 +419,7 @@ def run(
                     try:
                         seq_len.append(data_tokens[i][col_type])
                     except Exception:
-                        print(f"第{i}行无法读取。") # 因为有一些行读不出来，可能会导致i不存在
+                        print(f"第{i}行, col_type为{col_type}无法读取。") # 因为有一些行读不出来，可能会导致i不存在
                         continue
                 max_seq_len = max(seq_len)
                 min_seq_len = min(seq_len) 
@@ -480,7 +481,36 @@ def run(
 
             return res_dict
 
+        def get_image_missing_ratio(data_tokens, column_types, missing_ratios):
+            fail_tokens = 0
+            for col in data_tokens.columns:
+                if "image" in column_types[col]:
+                    for a in data_tokens[col]:
+                        try:
+                            p = Image.open(a)
+                        except Exception:
+                            fail_tokens += 1
+                    break
+            missing_ratios[col] = fail_tokens / len(data_tokens)
+            return missing_ratios
+
+
+
+        def get_type_missing_ratios(missing_ratios, column_types):
+            type_missing_ratios = {}
+            for col, missing_rate in missing_ratios.items():
+                if column_types[col] not in type_missing_ratios:
+                    type_missing_ratios[column_types[col]] = []
+                type_missing_ratios[column_types[col]].append(missing_rate)
+            return type_missing_ratios
+
         predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
+        train_data.data = predictor._learner._train_data
+        val_data.data = predictor._learner._tuning_data
+        train_data.data = predictor._learner._train_data.reset_index(drop=True)
+        val_data.data = predictor._learner._tuning_data.reset_index(drop=True)
+
+
         column_types = []
         predictor._learner.infer_column_types(column_types=column_types)
         # 输出当前数据的col types
@@ -494,6 +524,34 @@ def run(
         if column_types[label_column] == 'categorical': cal_num -= 1
         if column_types[label_column] == 'text': text_num -= 1
         if column_types[label_column] == 'numerical': numer_num -= 1
+
+        #  输出缺失比例
+        train_missing_ratios = {col: train_data.data[col].isna().sum() / len(train_data.data) for col in train_data.data.columns}
+        val_missing_ratios = {col: val_data.data[col].isna().sum() / len(val_data.data) for col in val_data.data.columns}
+        test_missing_ratios =  {col: test_data.data[col].isna().sum() / len(test_data.data) for col in test_data.data.columns}
+        # 进一步对image处理
+        train_missing_ratios = get_image_missing_ratio(train_data.data, column_types, train_missing_ratios)
+        val_missing_ratios = get_image_missing_ratio(val_data.data, column_types, val_missing_ratios)
+        test_missing_ratios = get_image_missing_ratio(test_data.data, column_types, test_missing_ratios)
+
+        print("train_missing_ratios: ", train_missing_ratios)
+        print("val_missing_ratios: ", val_missing_ratios)
+        print("test_missing_ratios: ", test_missing_ratios)
+
+        # 输出每种type的缺失比例(image_text_tabular)
+        train_type_missing_ratios =  get_type_missing_ratios(train_missing_ratios, column_types)
+        val_type_missing_ratios =  get_type_missing_ratios(val_missing_ratios, column_types)
+        test_type_missing_ratios =  get_type_missing_ratios(test_missing_ratios, column_types)
+        for cate_type, value in train_type_missing_ratios.items():
+            print(f"Missing ratios of {cate_type} in training: {np.round(np.mean(value)*100, 3)}%.")
+        print()
+        for cate_type, value in val_type_missing_ratios.items():
+            print(f"Missing ratios of {cate_type} in validation: {np.round(np.mean(value)*100, 3)}%.")
+        print()
+        for cate_type, value in test_type_missing_ratios.items():
+            print(f"Missing ratios of {cate_type} in testing: {np.round(np.mean(value)*100, 3)}%.")
+        print()
+
 
 
         tokenizer = get_pretrained_tokenizer(
