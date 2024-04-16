@@ -186,6 +186,9 @@ def get_args():
         "--use_miss_token_embed",action='store_true', default=False,
     )
     
+    parser.add_argument(
+        "--LeMDA", action='store_true', default=False,
+    )
 
     args = parser.parse_args()
     return args
@@ -557,7 +560,6 @@ def run(
         print()
 
 
-
         tokenizer = get_pretrained_tokenizer(
             tokenizer_name="hf_auto", # 
             checkpoint_name='microsoft/deberta-v3-base', # 
@@ -670,8 +672,10 @@ if __name__ == "__main__":
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header_template"] = args.categorical_convert_to_text_use_header_template
-    if args.categorical_convert_to_text_use_header_template == "latex":
-        assert args.no_hf_text_insert_sep == False
+    # if args.categorical_convert_to_text_use_header_template == "latex":
+    #     assert args.no_hf_text_insert_sep == False
+    #     args.params['hyperparameters']["model.hf_text.insert_sep"] = False 
+    if  args.no_hf_text_insert_sep == False:
         args.params['hyperparameters']["model.hf_text.insert_sep"] = False 
     args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
     args.params['hyperparameters']["data.numerical.convert_to_text_use_header"] = args.numerical_convert_to_text_use_header
@@ -753,6 +757,19 @@ if __name__ == "__main__":
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
 
+
+    if args.LeMDA:
+      
+        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+        args.params['hyperparameters'][f'optimization.aug_optimizer'] = True
+        args.params['hyperparameters'][f'optimization.aug_turn_on'] = True
+        args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
+        args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
+        args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
+
+
+
+  
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
