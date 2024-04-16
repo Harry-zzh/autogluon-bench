@@ -181,6 +181,9 @@ def get_args():
         "--no_hf_text_insert_sep",action='store_false', default=True,
     )
     
+    parser.add_argument(
+        "--LeMDA", action='store_true', default=False,
+    )
 
     args = parser.parse_args()
     return args
@@ -480,7 +483,18 @@ def run(
 
             return res_dict
 
+        def get_type_missing_ratios(missing_ratios):
+            type_missing_ratios = {}
+            for col, missing_rate in missing_ratios.items():
+                if column_types[col] not in type_missing_ratios:
+                    type_missing_ratios[column_types[col]] = []
+                type_missing_ratios[column_types[col]].append(missing_rate)
+            return type_missing_ratios
+
         predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
+        train_data.data = predictor._learner._train_data.reset_index(drop=True)
+        val_data.data = predictor._learner._tuning_data.reset_index(drop=True)
+
         column_types = []
         predictor._learner.infer_column_types(column_types=column_types)
         # 输出当前数据的col types
@@ -494,6 +508,28 @@ def run(
         if column_types[label_column] == 'categorical': cal_num -= 1
         if column_types[label_column] == 'text': text_num -= 1
         if column_types[label_column] == 'numerical': numer_num -= 1
+
+        #  输出缺失比例
+        train_missing_ratios = {col: train_data.data[col].isna().sum() / len(train_data.data) for col in train_data.data.columns}
+        val_missing_ratios = {col: val_data.data[col].isna().sum() / len(val_data.data) for col in val_data.data.columns}
+        test_missing_ratios =  {col: test_data.data[col].isna().sum() / len(test_data.data) for col in test_data.data.columns}
+        print("train_missing_ratios: ", train_missing_ratios)
+        print("val_missing_ratios: ", val_missing_ratios)
+        print("test_missing_ratios: ", test_missing_ratios)
+
+        # 输出每种type的缺失比例(image_text_tabular)
+        train_type_missing_ratios =  get_type_missing_ratios(train_missing_ratios)
+        val_type_missing_ratios =  get_type_missing_ratios(val_missing_ratios)
+        test_type_missing_ratios =  get_type_missing_ratios(test_missing_ratios)
+        for cate_type, value in train_type_missing_ratios.items():
+            print(f"Missing ratios of {cate_type} in training: {np.round(np.mean(value)*100, 3)}%.")
+        print()
+        for cate_type, value in val_type_missing_ratios.items():
+            print(f"Missing ratios of {cate_type} in validation: {np.round(np.mean(value)*100, 3)}%.")
+        print()
+        for cate_type, value in test_type_missing_ratios.items():
+            print(f"Missing ratios of {cate_type} in testing: {np.round(np.mean(value)*100, 3)}%.")
+        print()
 
 
         tokenizer = get_pretrained_tokenizer(
@@ -687,6 +723,18 @@ if __name__ == "__main__":
         if args.auxiliary_weight != 0.1:
             args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
             print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
+
+    if args.LeMDA:
+      
+        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+        args.params['hyperparameters'][f'optimization.aug_optimizer'] = True
+        args.params['hyperparameters'][f'optimization.aug_turn_on'] = True
+        args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
+        args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
+        args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
+
+
+
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
