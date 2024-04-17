@@ -192,6 +192,9 @@ def get_args():
     parser.add_argument(
         "--LeMDA_arch", type=str, default="mlp_vae",
     )
+    parser.add_argument(
+        "--modality_drop_rate", type=float, default=0.
+    )
     
 
     args = parser.parse_args()
@@ -772,6 +775,8 @@ if __name__ == "__main__":
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
         args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
 
+    if args.modality_drop_rate > 0.:
+        args.params['hyperparameters'][f'data.modality_drop_ratio'] = args.modality_drop_rate
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
