@@ -185,6 +185,10 @@ def get_args():
     parser.add_argument(
         "--LeMDA", action='store_true', default=False,
     )
+    parser.add_argument(
+        "--LeMDA_arch", type=str, default="mlp_vae",
+    )
+    
 
     args = parser.parse_args()
     return args
@@ -756,8 +760,7 @@ if __name__ == "__main__":
         args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
-
-
+        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
 
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
