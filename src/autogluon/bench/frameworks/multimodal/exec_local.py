@@ -181,10 +181,18 @@ def get_args():
     parser.add_argument(
         "--no_hf_text_insert_sep",action='store_false', default=True,
     )
+
+    parser.add_argument(
+        "--use_miss_token_embed",action='store_true', default=False,
+    )
     
     parser.add_argument(
         "--LeMDA", action='store_true', default=False,
     )
+    parser.add_argument(
+        "--LeMDA_arch", type=str, default="mlp_vae",
+    )
+    
 
     args = parser.parse_args()
     return args
@@ -747,6 +755,12 @@ if __name__ == "__main__":
         if args.auxiliary_weight != 0.1:
             args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
             print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
+    
+    # 暂时只换掉image和text
+    if args.use_miss_token_embed:
+        for model_name in args.params['hyperparameters']['model.names']:
+            args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+
 
     if args.LeMDA:
       
@@ -756,13 +770,15 @@ if __name__ == "__main__":
         args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
-
-
+        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
 
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
+
+    
+
 
     if args.custom_metrics is not None:
         with open(args.custom_metrics, 'r') as f:
