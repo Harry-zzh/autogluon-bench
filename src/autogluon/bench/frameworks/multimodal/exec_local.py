@@ -195,6 +195,14 @@ def get_args():
     parser.add_argument(
         "--modality_drop_rate", type=float, default=0.
     )
+
+    parser.add_argument(
+        "--self_distill", action='store_true', default=False,
+    )
+
+    parser.add_argument(
+        "--alignment_loss", type=str, default=None,
+    )
     
 
     args = parser.parse_args()
@@ -777,6 +785,15 @@ if __name__ == "__main__":
 
     if args.modality_drop_rate > 0.:
         args.params['hyperparameters'][f'data.modality_drop_ratio'] = args.modality_drop_rate
+
+    # if args.self_distill:
+    #     args.params['teacher_predictor'] = "self_distill"
+    #     args.params['hyperparameters'][f'distiller.self_distill'] = True
+    # else:
+    #     args.params['teacher_predictor'] = None
+
+    if args.alignment_loss != None:
+        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = "KL"
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
