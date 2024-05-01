@@ -15,8 +15,12 @@ from autogluon_local.multimodal.src.autogluon.multimodal import __version__ as a
 from autogluon_local.multimodal.src.autogluon.multimodal.constants import IMAGE_SIMILARITY, IMAGE_TEXT_SIMILARITY, OBJECT_DETECTION, TEXT_SIMILARITY
 import yaml
 from autogluon_local.multimodal.src.autogluon.multimodal.models.utils import get_pretrained_tokenizer
+from autogluon_local.core.src.autogluon.core.models.greedy_ensemble.ensemble_selection import EnsembleSelection
 import numpy as np
 from PIL import Image
+from autogluon_local.core.src.autogluon.core.metrics import get_metric
+from autogluon_local.multimodal.src.autogluon.multimodal.utils.misc import logits_to_prob
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -202,6 +206,10 @@ def get_args():
 
     parser.add_argument(
         "--alignment_loss", type=str, default=None,
+    )
+
+    parser.add_argument(
+        "--use_ensemble", action='store_true', default=False, help="get dataset information."
     )
     
 
@@ -391,6 +399,7 @@ def run(
     predictor = MultiModalPredictor(**predictor_args)
 
     get_dataset_info = params.pop("get_dataset_info")
+    use_ensemble = params.pop("use_ensemble")
 
     if get_dataset_info:
 
@@ -602,6 +611,180 @@ def run(
               f"& {train_res_dict['text']['max_seq_len']} & {train_res_dict['text']['min_seq_len']} & {train_res_dict['text']['greater_than_512_ratio']} & {train_res_dict['Text+Cate']['greater_than_512_ratio']}  & {train_res_dict['Text+Cate+Num']['greater_than_512_ratio']} "
               f"& {test_res_dict['text']['max_seq_len']} & {test_res_dict['text']['min_seq_len']} & {test_res_dict['text']['greater_than_512_ratio']} & {test_res_dict['Text+Cate']['greater_than_512_ratio']} & {test_res_dict['Text+Cate+Num']['greater_than_512_ratio']} ")
         return
+    elif use_ensemble: # 希望在validation data上evaluate
+        zeroshot_configs = [] # 最后要选择的模型config，在我的场景里就是model ckpt name
+        
+        # 1. baseline
+        # 2. independent aug
+        # 3. fusion transformer
+        # 4. early fusion
+        # 5. sequential fusion
+        # 6. modality dropout
+        # 7. auxiliary loss
+        # 8. 
+        
+        all_configs = [
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.2/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/KL_align_loss/run1/models/model.ckpt"]
+        num_zeroshot = len(all_configs)
+        problem_type = train_data.problem_type
+
+        def score(predictor, config_selected, test_only=False, ensemble_weights=None):
+            pred_val = []
+            pred_test = []
+            for config_s in config_selected:
+                basedir = os.path.dirname(config_s)
+                # if os.path.exists(os.path.join(basedir, "preds_val.npy")):
+                #     preds_val = np.load(os.path.join(basedir, "preds_val.npy"))
+                #     y_val = np.load(os.path.join(basedir, "gt_val.npy"))
+                #     preds_test = np.load(os.path.join(basedir, "preds_test.npy"))
+                #     y_test = np.load(os.path.join(basedir, "gt_test.npy"))
+                #     # print(f"{basedir} already have pred and gt.")
+                # else:
+                predictor = predictor.load(config_s) # eval_model_path
+                training_duration = 0.
+                predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
+                train_data.data = predictor._learner._train_data
+                val_data.data = predictor._learner._tuning_data
+                train_data.data = predictor._learner._train_data.reset_index(drop=True)
+                val_data.data = predictor._learner._tuning_data.reset_index(drop=True)
+
+                evaluate_args = {
+                    "data": val_data.data,
+                    "label": label_column,
+                    "metrics": val_data.metric if metrics_func is None else metrics_func,
+                    "use_ensemble": True
+                }
+                scores, preds_val, y_val = predictor.evaluate(**evaluate_args)
+                np.save(os.path.join(basedir, "preds_val.npy"), preds_val)
+                np.save(os.path.join(basedir, "gt_val.npy"), y_val)
+                print("validatioin metric:", scores)
+
+
+                evaluate_args["data"] = test_data.data
+                scores, preds_test, y_test = predictor.evaluate(**evaluate_args)
+                np.save(os.path.join(basedir, "preds_test.npy"), preds_test)
+                np.save(os.path.join(basedir, "gt_test.npy"), y_test)
+                print("test metric: ", scores)
+                pred_val.append(preds_val)
+                pred_test.append(preds_test)
+
+
+            model_list = config_selected
+            pred_val = np.stack(pred_val) # y_val不用stack
+            pred_test = np.stack(pred_test)
+            val_metric = get_metric(metric=val_data.metric, problem_type=problem_type )
+
+            ## weight ensemble
+            weighted_ensemble = EnsembleSelection(
+                ensemble_size=10,
+                problem_type=problem_type,
+                metric=val_metric,
+                # **self.ensemble_method_kwargs,
+            )
+
+            if test_only: # 只需要test
+                weighted_ensemble.weights_ = ensemble_weights
+                y_test_pred, y_pred_proba = weighted_ensemble.predict(pred_test)
+                if problem_type in ["binary"]:
+                    y_test_pred = list(logits_to_prob(y_test_pred)[:,1])
+                err = val_metric.error(y_test, y_test_pred)
+                return err, ensemble_weights
+            
+            # if problem_type in ["binary", "multiclass"]:
+            #     weighted_ensemble.fit(predictions=logits_to_prob(pred_val), labels=y_val) # 这个pred_val应该是model_list里的所有model的pred
+            # else:
+            weighted_ensemble.fit(predictions=pred_val, labels=y_val)
+
+            y_val_pred, y_pred_proba = weighted_ensemble.predict(pred_val)
+            # _calculate_regret方法没问题，算的结果和直接调用error一样，但是在weighted_ensemble.fit里返回的又不一样了。
+            # weighted_ensemble._calculate_regret(y_true=y_val, y_pred_proba=y_pred_proba, metric=weighted_ensemble.metric, sample_weight=None)
+            
+            if problem_type in ["binary"]:
+                y_val_pred = list(logits_to_prob(y_val_pred)[:,1])
+
+            err = val_metric.error(y_val, y_val_pred)
+            ensemble_weights: np.array = weighted_ensemble.weights_
+            # rank = compute_rank_mean(err)
+            return err, ensemble_weights
+            
+        def _select_sequential(configs: list, prior_configs: list, prior_best_score=None):
+            best_next_config = None
+            best_ensemble_weights = None
+            # todo could use np.inf but would need unit-test (also to check that ray/sequential returns the same selection)
+            best_score = 999999999
+            for config in configs:
+                config_selected = prior_configs + [config]
+                config_score, ensemble_weights = score(predictor, config_selected) # 在这里会进行weight ensemble，一组组config遍历。得到的config_score 其实是算出来的rank
+                if config_score < best_score:
+                    best_score = config_score
+                    best_next_config = config
+                    best_ensemble_weights = ensemble_weights
+            return best_next_config, best_score, best_ensemble_weights
+
+        iteration = 0
+        while len(zeroshot_configs) < num_zeroshot: # 确定一下最终是由几个model进行ensemble
+            # greedily search the config that would yield the lowest average rank if we were to evaluate it in combination
+            # with previously chosen configs.
+
+            valid_configs = [c for c in all_configs if c not in zeroshot_configs]
+            if not valid_configs:
+                break
+            if iteration == 0:
+                prior_best_score = None
+            iteration += 1
+
+            time_start = time.time()
+            # 再研究一下选择。怎么样避免选择进更差的config。
+            best_next_config, best_train_score, best_ensemble_weights = _select_sequential(valid_configs, zeroshot_configs, prior_best_score=prior_best_score)
+            time_end = time.time()
+            prior_best_score = best_train_score
+
+            zeroshot_configs.append(best_next_config)
+            fit_time = time_end - time_start
+            msg = f'{iteration}\t: Train: {round(best_train_score, 2)}'
+
+            # test_score = config_scorer_test.score(zeroshot_configs)
+            test_score, test_ensemble_weights = score(predictor, zeroshot_configs, ensemble_weights=best_ensemble_weights, test_only=True)
+            print("Iteration: ", iteration)
+            print("eval error: ", best_train_score)
+            print("eval metric: ", 1 - best_train_score)
+            print("test error: ", test_score)
+            print("test metric: ", 1 - test_score)
+            # 这两个
+            # print("test_ensemble_weights: ", test_ensemble_weights) # 输出的weight顺序不一定和all_configs一致。
+            print("selected: ")
+            for c in zeroshot_configs:
+                print(c)
+            print("best_ensemble_weights: ", best_ensemble_weights)
+            print()
+            print()
+            msg += f' | {round(fit_time, 2)}s | {best_next_config}'
+            # print('here, make metadata')
+            # metadata_out = dict(
+            #     configs=copy.deepcopy(zeroshot_configs),
+            #     new_config=best_next_config,
+            #     step=iteration,
+            #     train_score=best_train_score,
+            #     test_score=test_score,
+            #     num_configs=len(zeroshot_configs),
+            #     fit_time=fit_time,
+            # )
+            # is_last = len(zeroshot_configs) >= num_zeroshot
+            # if return_all_metadata or is_last:
+            #     metadata_list.append(metadata_out)
+
+            # print(msg)
+        print("final selected: ")
+        for c in zeroshot_configs:
+            print(c)
+        print("best_ensemble_weights: ", best_ensemble_weights)
+        
     else:
         fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
 
@@ -699,6 +882,7 @@ if __name__ == "__main__":
     args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
     args.params['get_dataset_info'] = args.get_dataset_info
+    args.params['use_ensemble'] = args.use_ensemble
     args.params['seed'] = args.seed
 
     args.params['hyperparameters']['model.hf_text.max_text_len'] = args.max_text_len
@@ -771,7 +955,6 @@ if __name__ == "__main__":
     if args.use_miss_token_embed:
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
-
 
     if args.LeMDA:
       
