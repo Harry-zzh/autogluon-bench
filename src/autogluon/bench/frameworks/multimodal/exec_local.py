@@ -976,7 +976,10 @@ if __name__ == "__main__":
     #     args.params['teacher_predictor'] = None
 
     if args.alignment_loss != None:
-        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = "KL"
+        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
+
+    # if args.contrastive_loss:
+    #     args.params['hyperparameters'][f'optimization.contrastive_loss'] = True
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
