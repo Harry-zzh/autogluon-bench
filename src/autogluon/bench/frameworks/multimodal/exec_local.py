@@ -639,38 +639,39 @@ def run(
             pred_test = []
             for config_s in config_selected:
                 basedir = os.path.dirname(config_s)
-                # if os.path.exists(os.path.join(basedir, "preds_val.npy")):
-                #     preds_val = np.load(os.path.join(basedir, "preds_val.npy"))
-                #     y_val = np.load(os.path.join(basedir, "gt_val.npy"))
-                #     preds_test = np.load(os.path.join(basedir, "preds_test.npy"))
-                #     y_test = np.load(os.path.join(basedir, "gt_test.npy"))
-                #     # print(f"{basedir} already have pred and gt.")
-                # else:
-                predictor = predictor.load(config_s) # eval_model_path
-                training_duration = 0.
-                predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
-                train_data.data = predictor._learner._train_data
-                val_data.data = predictor._learner._tuning_data
-                train_data.data = predictor._learner._train_data.reset_index(drop=True)
-                val_data.data = predictor._learner._tuning_data.reset_index(drop=True)
+                if os.path.exists(os.path.join(basedir, "preds_val.npy")) and os.path.exists(os.path.join(basedir, "preds_test.npy")):
+                    preds_val = np.load(os.path.join(basedir, "preds_val.npy"))
+                    y_val = np.load(os.path.join(basedir, "gt_val.npy"))
+                    preds_test = np.load(os.path.join(basedir, "preds_test.npy"))
+                    y_test = np.load(os.path.join(basedir, "gt_test.npy"))
+                    # print(f"{basedir} already have pred and gt.")
+                else:
+                    predictor = predictor.load(config_s) # eval_model_path
+                    training_duration = 0.
+                    predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
+                    train_data.data = predictor._learner._train_data
+                    val_data.data = predictor._learner._tuning_data
+                    train_data.data = predictor._learner._train_data.reset_index(drop=True)
+                    val_data.data = predictor._learner._tuning_data.reset_index(drop=True)
 
-                evaluate_args = {
-                    "data": val_data.data,
-                    "label": label_column,
-                    "metrics": val_data.metric if metrics_func is None else metrics_func,
-                    "use_ensemble": True
-                }
-                scores, preds_val, y_val = predictor.evaluate(**evaluate_args)
-                np.save(os.path.join(basedir, "preds_val.npy"), preds_val)
-                np.save(os.path.join(basedir, "gt_val.npy"), y_val)
-                print("validatioin metric:", scores)
+                    evaluate_args = {
+                        "data": val_data.data,
+                        "label": label_column,
+                        "metrics": val_data.metric if metrics_func is None else metrics_func,
+                        "use_ensemble": True
+                    }
+                    scores, preds_val, y_val = predictor.evaluate(**evaluate_args)
+                    np.save(os.path.join(basedir, "preds_val.npy"), preds_val)
+                    np.save(os.path.join(basedir, "gt_val.npy"), y_val)
+                    print("validatioin metric:", scores)
 
 
-                evaluate_args["data"] = test_data.data
-                scores, preds_test, y_test = predictor.evaluate(**evaluate_args)
-                np.save(os.path.join(basedir, "preds_test.npy"), preds_test)
-                np.save(os.path.join(basedir, "gt_test.npy"), y_test)
-                print("test metric: ", scores)
+                    evaluate_args["data"] = test_data.data
+                    scores, preds_test, y_test = predictor.evaluate(**evaluate_args)
+                    np.save(os.path.join(basedir, "preds_test.npy"), preds_test)
+                    np.save(os.path.join(basedir, "gt_test.npy"), y_test)
+                    print("test metric: ", scores)
+
                 pred_val.append(preds_val)
                 pred_test.append(preds_test)
 
