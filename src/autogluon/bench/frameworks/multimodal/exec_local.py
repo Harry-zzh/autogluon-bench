@@ -840,7 +840,7 @@ if __name__ == "__main__":
 
     ### Cross-modal alignment
     if args.alignment_loss != None:
-        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = "KL"
+        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
     
 
     ### Data Aug
