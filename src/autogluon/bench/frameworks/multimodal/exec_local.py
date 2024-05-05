@@ -209,6 +209,10 @@ def get_args():
     )
 
     parser.add_argument(
+        "--contrastive_loss", type=str, default=None,
+    )
+
+    parser.add_argument(
         "--use_ensemble", action='store_true', default=False, help="get dataset information."
     )
     
@@ -979,8 +983,8 @@ if __name__ == "__main__":
     if args.alignment_loss != None:
         args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
 
-    # if args.contrastive_loss:
-    #     args.params['hyperparameters'][f'optimization.contrastive_loss'] = True
+    if args.contrastive_loss != None:
+        args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
