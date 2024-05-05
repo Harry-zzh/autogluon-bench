@@ -129,6 +129,10 @@ def get_args():
     parser.add_argument(
         "--alignment_loss", type=str, default=None, help="positive-only alignment loss."
     )
+    parser.add_argument(
+        "--contrastive_loss", type=str, default=None, help="positive+negative alignment loss."
+    )
+    
 
     ### Data Aug
     parser.add_argument(
@@ -841,8 +845,9 @@ if __name__ == "__main__":
     ### Cross-modal alignment
     if args.alignment_loss != None:
         args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
+    if args.contrastive_loss != None:
+        args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
     
-
     ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
     if args.not_use_image_aug == False:
