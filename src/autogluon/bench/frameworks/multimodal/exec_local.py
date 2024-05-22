@@ -105,6 +105,9 @@ def get_args():
         "--clip_high_quality", action="store_true", default=False, help="Use clip high quality"
     )
     parser.add_argument(
+        "--use_llama_7B", action='store_true', default=False, help="Use LLM(LLAMA-7B) as the fusion module."
+    )
+    parser.add_argument(
         "--early_fusion", action="store_true", default=False
     )
     parser.add_argument(
@@ -809,6 +812,8 @@ if __name__ == "__main__":
             args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
             args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
         use_default_fusion = False
+        if args.use_llama_7B:
+            args.params['hyperparameters']['model.fusion_transformer.use_llama_7B'] = True
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
