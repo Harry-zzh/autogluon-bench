@@ -21,6 +21,7 @@ base: &base
   problem_type: multiclass
   convert_to_log: False
   loss_func: null
+  sep: ","
   
 
 
@@ -72,6 +73,24 @@ action_effect_pred:
     - label
   image_columns:
     - images
+
+fakeddit:
+  <<: *base
+  splits:
+    - train
+    - validation
+    - test
+  train_file: train.csv
+  val_file: validation.csv
+  test_file: test.csv
+  feature_columns:
+    - clean_title
+    - images
+  label_columns:
+    - 6_way_label
+  image_columns:
+    - images
+  sep: "\t"
 
 CCD:
   <<: *base
