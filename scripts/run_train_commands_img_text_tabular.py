@@ -19,7 +19,7 @@ def distribute(process_command):
     finally:
         queue.put(gpu_id)
 
-BEGIN_GPU=0
+BEGIN_GPU=1
 for gpu_ids in range(BEGIN_GPU, BEGIN_GPU+ NUM_GPUS):
     for _ in range(PROC_PER_GPU):
         # if gpu_ids in [0,1,]: continue
