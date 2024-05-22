@@ -222,6 +222,9 @@ def get_args():
     parser.add_argument(
         "--use_llama", action='store_true', default=False, help="use fusion transformer llama."
     )
+    parser.add_argument(
+        "--use_llama_7B", action='store_true', default=False, help="use fusion transformer llama."
+    )
     
 
     args = parser.parse_args()
@@ -918,6 +921,8 @@ if __name__ == "__main__":
         use_default_fusion = False
         if args.use_llama:
             args.params['hyperparameters']['model.fusion_transformer.use_llama'] = True
+        if args.use_llama_7B:
+            args.params['hyperparameters']['model.fusion_transformer.use_llama_7B'] = True
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
