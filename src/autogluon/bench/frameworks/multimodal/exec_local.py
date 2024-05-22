@@ -218,6 +218,13 @@ def get_args():
     parser.add_argument(
         "--use_ensemble", action='store_true', default=False, help="get dataset information."
     )
+
+    parser.add_argument(
+        "--use_llama", action='store_true', default=False, help="use fusion transformer llama."
+    )
+    parser.add_argument(
+        "--use_llama_7B", action='store_true', default=False, help="use fusion transformer llama."
+    )
     
 
     args = parser.parse_args()
@@ -627,8 +634,8 @@ def run(
         # 4. early fusion
         # 5. sequential fusion
         # 6. modality dropout
-        # 7. auxiliary loss
-        # 8. 
+        # 7. align loss
+        # 8.  
         
         all_configs = [
             f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
@@ -912,6 +919,10 @@ if __name__ == "__main__":
             args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
             args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
         use_default_fusion = False
+        if args.use_llama:
+            args.params['hyperparameters']['model.fusion_transformer.use_llama'] = True
+        if args.use_llama_7B:
+            args.params['hyperparameters']['model.fusion_transformer.use_llama_7B'] = True
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
