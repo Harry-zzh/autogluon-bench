@@ -21,6 +21,7 @@ base: &base
   problem_type: multiclass
   convert_to_log: False
   loss_func: null
+  sep: ","
   
 
 petfinder:
@@ -1043,7 +1044,24 @@ impressions_dataset:
   metric: r2
 
 
-
+fakeddit:
+  <<: *base
+  splits:
+    - train
+    - validation
+    - test
+  train_file: train.csv
+  val_file: validation.csv
+  test_file: test.csv
+  feature_columns:
+    - clean_title
+    - images
+  label_columns:
+    - 6_way_label
+  image_columns:
+    - images
+  sep: "\t"
+  
 _%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features: &cpp_with_image_base
   url: s3://automl-mm-bench/cpp_with_image_97dataset/%SC%RestrictedProducts%IllegallyMkted%SE_Adult_Products_With_Childlike_Features.zip
   sha1sum: 41f930a1329b63ade7933cfa7839466e56ea6f06
