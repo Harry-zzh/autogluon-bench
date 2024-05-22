@@ -629,22 +629,27 @@ def run(
         zeroshot_configs = [] # 最后要选择的模型config，在我的场景里就是model ckpt name
         
         # 1. baseline
-        # 2. independent aug
-        # 3. fusion transformer
+        # 2. independent aug 0.571 & 0.567 & 0.930 & 0.596 & 0.880 & 0.709
+        # 3. fusion transformer 
         # 4. early fusion
         # 5. sequential fusion
-        # 6. modality dropout
-        # 7. align loss
-        # 8.  
+        # 6. clip fusion
+        # 7. modality dropout
+        # 8. align loss
+        # 9. 
         
         all_configs = [
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.2/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/KL_align_loss/run1/models/model.ckpt"]
+         
+            
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/early_fusion_True/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.2/run1/models/model.ckpt",
+            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_align_loss/run1/models/model.ckpt"
+            ]
         num_zeroshot = len(all_configs)
         problem_type = train_data.problem_type
 

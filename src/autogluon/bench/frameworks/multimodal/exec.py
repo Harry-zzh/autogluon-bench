@@ -276,13 +276,16 @@ def run(
 
 if __name__ == "__main__":
     args = get_args()
+    print("args:")
+    print(args)
     if args.params is not None:
         args.params = json.loads(args.params)
     if args.custom_dataloader is not None:
         args.custom_dataloader = json.loads(args.custom_dataloader)
     if args.custom_metrics is not None:
         args.custom_metrics = json.loads(args.custom_metrics)
-
+    print("args:")
+    print(args)
     run(
         dataset_name=args.dataset_name,
         framework=args.framework,

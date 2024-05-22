@@ -51,6 +51,9 @@ class BaseMultiModalDataset(abc.ABC):
         try:
             ext = os.path.splitext(data_info[split]["url"])[-1]
             self._path = os.path.join(get_data_home_dir(), dataset_name, f"{split}{ext}")
+            print("self._path:", self._path)
+            print("bash sum: ", data_info[split]["sha1sum"])
+            print("url: ",data_info[split]["url"])
             download(data_info[split]["url"], path=self._path, sha1_hash=data_info[split]["sha1sum"])
             if ext == ".csv":
                 self._data = pd.read_csv(self._path)

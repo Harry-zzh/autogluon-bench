@@ -1,11 +1,4 @@
 # supports both regular and fewshot datasets
-# for fullshot:
-# custom_dataloader:
-#     dataloader_file: sample_configs/text_dataset.py   # relative path to WORKDIR
-#     class_name: TextDataset
-#     lang: en
-#     dataset_config_file: test/automm_text_datasets.yaml
-
 # for fewshot:
 # custom_dataloader:
 #     dataloader_file: sample_configs/text_dataset.py   # relative path to WORKDIR
@@ -19,7 +12,7 @@
 # When running in AWS mode, DATA_BUCKET: <dataset_bucket> needs to be specified in the run config
 
 base: &base
-  url: s3://<data_bucket>/{name}/{lang}/{subsample_path}{split}.csv
+  url: s3://automl-mm-bench/comprehend_benchmarks/{name}/{lang}/{subsample_path}{split}.csv
   splits:
     - train
     - validation
@@ -27,6 +20,9 @@ base: &base
   langs:
     - de
     - en
+    - es
+    - fr
+    - it
   data_columns:
     - label
     - text
@@ -46,6 +42,10 @@ base: &base
     - 5
     - 10
     - 20
+    - 50
+    - 100
+    - 500
+    - 1000
   seeds:
     - 0
     - 1
@@ -59,15 +59,61 @@ base: &base
     - 9
 
 
-dataset_1:
+amazon_reviews:
   <<: *base
   langs:
     - en
   problem_type: binary
 
-dataset_2:
+yelp_reviews:
+  <<: *base
+  langs:
+    - en
+  problem_type: binary
+
+yahoo_anwsers:
+  <<: *base
+  langs:
+    - en
+
+gnad10:
+  <<: *base
+  langs:
+    - de
+
+french_tweets_sentiment:
   <<: *base
   langs:
     - fr
-  problem_type: binary
 
+fb_dialog:
+  <<: *base
+  langs:
+    - en
+    - es
+
+apache:
+  <<: *base
+  langs:
+    - en
+
+ag_news:
+  <<: *base
+  langs:
+    - en
+
+SNIPS:
+  <<: *base
+  langs:
+    - en
+
+MultiATIS-5000:
+  <<: *base
+  langs:
+    - en
+    - es
+    - fr
+    - pt
+
+MLDoc-11000:
+  <<: *base
