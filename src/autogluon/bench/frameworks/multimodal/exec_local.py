@@ -228,6 +228,9 @@ def get_args():
     parser.add_argument(
         "--use_llama_7B", action='store_true', default=False, help="use fusion transformer llama."
     )
+    parser.add_argument(
+        "--no_use_cate_miss_embed",  action='store_true', default=False, help="naive baseline that not using missing embed for categorical."
+    )
     
 
     args = parser.parse_args()
@@ -1010,6 +1013,10 @@ if __name__ == "__main__":
     if args.contrastive_loss != None:
         args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
         args.params['hyperparameters'][f'optimization.contrastive_loss_w'] =  args.contrastive_loss_w
+    
+    if args.no_use_cate_miss_embed:
+        args.params['hyperparameters'][f'model.ft_transformer.no_use_cate_miss_embed'] = args.no_use_cate_miss_embed
+        
   
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
