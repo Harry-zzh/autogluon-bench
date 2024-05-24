@@ -986,6 +986,7 @@ if __name__ == "__main__":
     if args.use_miss_token_embed:
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+        args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
 
     if args.LeMDA:
       
