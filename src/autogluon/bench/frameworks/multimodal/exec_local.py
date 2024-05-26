@@ -231,6 +231,10 @@ def get_args():
     parser.add_argument(
         "--no_use_cate_miss_embed",  action='store_true', default=False, help="naive baseline that not using missing embed for categorical."
     )
+    parser.add_argument(
+        "--manifold_mixup",  action='store_true', default=False, 
+    )
+    
     
 
     args = parser.parse_args()
@@ -1017,8 +1021,15 @@ if __name__ == "__main__":
     
     if args.no_use_cate_miss_embed:
         args.params['hyperparameters'][f'model.ft_transformer.no_use_cate_miss_embed'] = args.no_use_cate_miss_embed
-        
-  
+    
+    if args.manifold_mixup:
+        args.params['hyperparameters'][f'optimization.manifold_mixup'] = True
+        args.params['hyperparameters'][f'model.timm_image.manifold_mixup'] = True
+        args.params['hyperparameters'][f'model.hf_text.manifold_mixup'] = True
+        args.params['hyperparameters'][f'model.ft_transformer.manifold_mixup'] = True
+        args.params['hyperparameters']["env.per_gpu_batch_size"] = 2
+        args.params['hyperparameters'][f'model.fusion_mlp.manifold_mixup'] = True
+    # args.params['hyperparameters']["data.mixup.turn_on"] = True
     print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
     print(args.params)
     # ['framework']['params']
