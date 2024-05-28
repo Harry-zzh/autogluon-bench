@@ -189,6 +189,18 @@ def get_args():
     parser.add_argument(
         "--use_miss_token_embed",action='store_true', default=False,
     )
+
+    parser.add_argument(
+        "--use_miss_token_embed_text",action='store_true', default=False,
+    )
+
+    parser.add_argument(
+        "--use_miss_token_embed_image",action='store_true', default=False,
+    )
+
+    parser.add_argument(
+        "--use_miss_token_embed_numerical",action='store_true', default=False,
+    )
     
     parser.add_argument(
         "--LeMDA", action='store_true', default=False,
@@ -986,11 +998,21 @@ if __name__ == "__main__":
             args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
             print("aug loss weight: ", args.params['hyperparameters']["model.fusion_mlp.weight"])
     
-    # 暂时只换掉image和text
     if args.use_miss_token_embed:
         for model_name in args.params['hyperparameters']['model.names']:
-            args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
-        args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
+            if args.use_miss_token_embed_image:
+                if "image" in model_name:
+                    args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+            elif args.use_miss_token_embed_text:
+                if "text" in model_name:
+                    args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+            elif args.use_miss_token_embed_numerical:
+                if "ft_transformer" in model_name:
+                    args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+                args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
+            else:
+                args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+                args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
 
     if args.LeMDA:
       
