@@ -611,12 +611,18 @@ def run(
         test_type_missing_ratios =  get_type_missing_ratios(test_missing_ratios, column_types)
         for cate_type, value in train_type_missing_ratios.items():
             print(f"Missing ratios of {cate_type} in training: {np.round(np.mean(value)*100, 3)}%.")
+            v = [np.round(vv*100, 3) for vv in value]
+            print(f"Missing ratios of each col of {cate_type} in training: {v}%.")
         print()
         for cate_type, value in val_type_missing_ratios.items():
             print(f"Missing ratios of {cate_type} in validation: {np.round(np.mean(value)*100, 3)}%.")
+            v = [np.round(vv*100, 3) for vv in value]
+            print(f"Missing ratios of each col of {cate_type} in validation: {v}%.")
         print()
         for cate_type, value in test_type_missing_ratios.items():
             print(f"Missing ratios of {cate_type} in testing: {np.round(np.mean(value)*100, 3)}%.")
+            v = [np.round(vv*100, 3) for vv in value]
+            print(f"Missing ratios of each col of {cate_type} in testing: {v}%.")
         print()
 
 
