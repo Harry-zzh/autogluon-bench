@@ -231,7 +231,10 @@ def get_args():
     )
 
     parser.add_argument(
-        "--use_ensemble", action='store_true', default=False, help="get dataset information."
+        "--use_ensemble", action='store_true', default=False, help="ensemble."
+    )
+    parser.add_argument(
+        "--use_avg_ensemble", action='store_true', default=False, help="avg ensemble."
     )
 
     parser.add_argument(
@@ -436,6 +439,8 @@ def run(
 
     get_dataset_info = params.pop("get_dataset_info")
     use_ensemble = params.pop("use_ensemble")
+    if use_ensemble:
+        use_avg_ensemble = params.pop("use_avg_ensemble")
 
     if get_dataset_info:
 
@@ -656,28 +661,32 @@ def run(
     elif use_ensemble: # 希望在validation data上evaluate
         zeroshot_configs = [] # 最后要选择的模型config，在我的场景里就是model ckpt name
         
-        # 1. baseline
-        # 2. independent aug 0.571 & 0.567 & 0.930 & 0.596 & 0.880 & 0.709
-        # 3. fusion transformer 
-        # 4. early fusion
-        # 5. sequential fusion
-        # 6. clip fusion
-        # 7. modality dropout
-        # 8. align loss
-        # 9. 
-        
+        prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
         all_configs = [
-         
-            
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/early_fusion_True/epoch_20/auxiliary_weight_0.0/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.2/run1/models/model.ckpt",
-            f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_align_loss/run1/models/model.ckpt"
+            # baseline+
+            f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
+            # lf-transformer
+            f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
+            # lf-aligned
+            f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
+            # early fusion
+            f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+            # lf-sequential fusion
+            f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+            # input aug
+            f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
+            # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.2/run1/models/model.ckpt",
+            # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_align_loss/run1/models/model.ckpt"
             ]
+
+        if params["seed"] == 0:
+            seed_str = ""
+        else:
+            seed_str = f"seed_{params['seed']}/"
+        for i in range(len(all_configs)):
+            all_configs[i] = prefix_str+all_configs[i]+ seed_str + "run1/models/model.ckpt"
+
+
         num_zeroshot = len(all_configs)
         problem_type = train_data.problem_type
 
@@ -776,6 +785,14 @@ def run(
             return best_next_config, best_score, best_ensemble_weights
 
         iteration = 0
+        if use_ensemble and use_avg_ensemble:
+            zeroshot_configs = all_configs
+            best_ensemble_weights = [1. / len(all_configs)] * len(all_configs)
+            test_score, test_ensemble_weights = score(predictor, zeroshot_configs, ensemble_weights=best_ensemble_weights, test_only=True)
+            print("test error: ", test_score)
+            print("test metric: ", 1 - test_score)
+            print("best_ensemble_weights: ", best_ensemble_weights)
+            return
         while len(zeroshot_configs) < num_zeroshot: # 确定一下最终是由几个model进行ensemble
             # greedily search the config that would yield the lowest average rank if we were to evaluate it in combination
             # with previously chosen configs.
@@ -931,6 +948,8 @@ if __name__ == "__main__":
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
     args.params['get_dataset_info'] = args.get_dataset_info
     args.params['use_ensemble'] = args.use_ensemble
+    if args.use_ensemble:
+        args.params['use_avg_ensemble'] = args.use_avg_ensemble
     args.params['seed'] = args.seed
 
     args.params['hyperparameters']['model.hf_text.max_text_len'] = args.max_text_len
