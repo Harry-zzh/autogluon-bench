@@ -392,8 +392,8 @@ print(process_list)
 print(len(process_list))
 # for p in process_list:
 #     print(p)
-for _ in pool.imap_unordered(distribute, process_list):
-    pass
-pool.close()
-pool.join()
+# for _ in pool.imap_unordered(distribute, process_list):
+#     pass
+# pool.close()
+# pool.join()
 
