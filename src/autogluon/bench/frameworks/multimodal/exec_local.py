@@ -571,22 +571,87 @@ def run(
     elif use_ensemble: # 希望在validation data上evaluate
         zeroshot_configs = [] # 最后要选择的模型config，在我的场景里就是model ckpt name
         
-        prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
-        all_configs = [
-            # baseline+
-            f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
-            # lf-transformer
-            f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
-            # lf-aligned
-            f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
-            # early fusion
-            f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
-            # lf-sequential fusion
-            f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
-            # input aug
-            f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
-            # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.2/run1/models/model.ckpt",
-            # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_align_loss/run1/models/model.ckpt"
+        if dataset_name in ["fake", "qaa", "qaq", "airbnb","channel", "cloth"]:
+            prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
+            all_configs = [
+                # baseline+
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
+                # lf-transformer
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
+                # lf-aligned
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
+                # lf-llm
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/max_epochs_20/use_llama7B_fusion/",
+                # early fusion
+                f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # lf-sequential fusion
+                f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # positive loss
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/KL_feature_align_loss/",
+                # pos-neg loss
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/contra_fea_contra_loss/contrastive_loss_w_1.0/",
+                # convert-categorical 
+                f"convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/",
+                # input aug
+                f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
+                # fea independent aug
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/manifold_mixup/",
+                # fea joint aug
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/LeMDA/lemda_layer_6/",
+                
+            ]
+            if dataset_name in ["airbnb", "channel", "cloth"]:
+                all_configs.append(
+                    # convert numerical
+                    "convert_to_text_False/ft_transformer_pretrained_False/convert_to_text_numerical/auxiliary_weight_0.0/max_epochs_20/"
+                )
+            if dataset_name in ["fake", "airbnb", "cloth"]:
+                all_configs.append(
+                    # modality drop=0.3
+                    "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/"
+                )
+                if dataset_name in ["airbnb"]:
+                    # miss embed
+                    all_configs.append(
+                        "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/use_miss_token_True/use_miss_token_True_numerical/"
+                    )
+
+
+        elif dataset_name in ["persuasive_techniques",  "Memotion", "UPMC-Food101","action_effect_pred", "fakeddit"]:
+            prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
+            all_configs = [
+                # # baseline+
+                # f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-transformer
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-aligned
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
+                # # early fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-sequential fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # input aug
+                # f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
+                # llama7B
+                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion//"
+            ]
+        elif dataset_name in   ["CCD", "skin_cancer",  "wikiart", "CD18_convert_to_log", "DVM-CAR_convert_to_log",  ]:
+            prefix_str = f"ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
+            all_configs = [
+                # # baseline+
+                # f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-transformer
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-aligned
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
+                # # early fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-sequential fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # input aug
+                # f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
+                # llama7B
+                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/"
             ]
 
         if params["seed"] == 0:
