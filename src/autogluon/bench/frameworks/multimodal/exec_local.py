@@ -661,22 +661,42 @@ def run(
     elif use_ensemble: # 希望在validation data上evaluate
         zeroshot_configs = [] # 最后要选择的模型config，在我的场景里就是model ckpt name
         
-        prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
-        all_configs = [
-            # baseline+
-            f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
-            # lf-transformer
-            f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
-            # lf-aligned
-            f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
-            # early fusion
-            f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
-            # lf-sequential fusion
-            f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
-            # input aug
-            f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
-            # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.2/run1/models/model.ckpt",
-            # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_align_loss/run1/models/model.ckpt"
+        if dataset_name in ["fake", "qaa", "qaq", "airbnb","channel", "cloth"]:
+            prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
+            all_configs = [
+                # # baseline+
+                # f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-transformer
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-aligned
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
+                # # early fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-sequential fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # input aug
+                # f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
+                # llama7B
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/max_epochs_20/use_llama7B_fusion/"
+                ]
+
+        elif dataset_name in ["persuasive_techniques",  "Memotion", "UPMC-Food101","action_effect_pred", "fakeddit"]:
+            prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
+            all_configs = [
+                # # baseline+
+                # f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-transformer
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-aligned
+                # f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
+                # # early fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # lf-sequential fusion
+                # f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
+                # # input aug
+                # f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
+                # llama7B
+                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion//"
             ]
 
         if params["seed"] == 0:
