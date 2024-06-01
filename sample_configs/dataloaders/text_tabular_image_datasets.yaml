@@ -651,6 +651,7 @@ DVM-CAR_convert_to_log:
 
 Memotion:
   <<: *base
+  url: s3://automl-mm-bench/Memotion_processed.zip
   feature_columns:
     - image_name
     - text_corrected
@@ -661,6 +662,7 @@ Memotion:
 
 UPMC-Food101:
   <<: *base
+  url: s3://automl-mm-bench/UPMC-Food101_processed.zip
   feature_columns:
     - image
     - text
@@ -1029,6 +1031,7 @@ action_effect_entailment:
 
 action_effect_pred:
   <<: *base
+  url: s3://automl-mm-bench/action_effect_pred_processed.zip
   feature_columns:
     - descriptions
     - images
@@ -1055,6 +1058,7 @@ impressions_dataset:
 
 fakeddit:
   <<: *base
+  url: s3://automl-mm-bench/fakeddit_processed.zip
   splits:
     - train
     - validation

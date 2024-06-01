@@ -11,8 +11,9 @@ def get_home_dir():
 
 def get_data_home_dir():
     """Get home directory for storing the datasets"""
-    home_dir = get_home_dir()
-    return os.path.join(home_dir, "datasets")
+    # home_dir = get_home_dir()
+    # return os.path.join(home_dir, "datasets")
+    return "/home/ubuntu/datasets"
 
 
 def get_repo_url():
