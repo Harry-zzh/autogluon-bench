@@ -23,6 +23,7 @@ AutoGluon_stable:
     hyperparameters:
       optimization.max_epochs: 10
       
+      # optimization.max_epochs: 1
 # default: optimization.max_epochs: 30
 # leaf: CUDA_VISIBLE_DEVICES=0 agbench run sample_configs/multimodal_local_configs_mine.yaml
 # road: CUDA_VISIBLE_DEVICES=1 agbench run sample_configs/multimodal_local_configs_mine.yaml
