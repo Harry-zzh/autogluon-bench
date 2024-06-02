@@ -20,10 +20,87 @@ import numpy as np
 from PIL import Image
 from autogluon_local.core.src.autogluon.core.metrics import get_metric
 from autogluon_local.multimodal.src.autogluon.multimodal.utils.misc import logits_to_prob
-
+import copy
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+def get_image_missing_ratio(data_tokens, column_types, missing_ratios):
+            fail_tokens = 0
+            for col in data_tokens.columns:
+                if "image" in column_types[col]:
+                    for a in data_tokens[col]:
+                        try:
+                            p = Image.open(a)
+                        except Exception:
+                            fail_tokens += 1
+                    break
+            missing_ratios[col] = fail_tokens / len(data_tokens)
+            return missing_ratios
+
+
+
+def get_type_missing_ratios(missing_ratios, column_types):
+    type_missing_ratios = {}
+    for col, missing_rate in missing_ratios.items():
+        if column_types[col] not in type_missing_ratios:
+            type_missing_ratios[column_types[col]] = []
+        type_missing_ratios[column_types[col]].append(missing_rate)
+    return type_missing_ratios
+
+def drop_modalities(df, a, column_types, seed=0):
+    np.random.seed(seed)
+    # 检查输入参数
+    assert 0 <= a <= 1, "丢失比例a应该在0到1之间"
+    
+    # 获取不同模态的列名
+    image_columns = [col for col in df.columns if col in column_types and 'image' in column_types[col]]
+    text_columns = [col for col in df.columns if col in column_types and 'text' in column_types[col]]
+    categorical_columns = [col for col in df.columns if col in column_types and 'categorical' in column_types[col]]
+    numerical_columns = [col for col in df.columns if col in column_types and 'numerical' in column_types[col]]
+    
+    # Tabular columns
+    tabular_columns = categorical_columns + numerical_columns
+    
+    # 定义一个函数来计算丢失的索引
+    def get_missing_indices(columns, proportion):
+        total_elements = len(df) * len(columns)
+        n_missing = int(total_elements * proportion)
+        missing_indices = np.random.choice(total_elements, n_missing, replace=False, )
+        row_indices = missing_indices // len(columns)
+        col_indices = missing_indices % len(columns)
+        return list(zip(row_indices, col_indices))
+    
+    # 丢失image模态的值
+    for row_idx, col_idx in get_missing_indices(image_columns, a):
+        df.loc[row_idx, image_columns[col_idx]] = np.nan
+        
+    # 丢失text模态的值
+    for row_idx, col_idx in get_missing_indices(text_columns, a):
+        df.loc[row_idx, text_columns[col_idx]] = np.nan
+        
+    # 丢失tabular模态的值
+    for row_idx, col_idx in get_missing_indices(tabular_columns, a):
+        df.loc[row_idx, tabular_columns[col_idx]] = np.nan
+    
+    # 确保没有一行中所有模态都被丢失
+    for index, row in df.iterrows():
+        if row[image_columns].isnull().all() and row[text_columns].isnull().all() and row[tabular_columns].isnull().all():
+            if len(image_columns) == 0:
+                modality_to_retain = np.random.choice(['text', 'tabular'])
+            elif len(text_columns) == 0:
+                modality_to_retain = np.random.choice(['image', 'tabular'])
+            elif len(tabular_columns) == 0:
+                modality_to_retain = np.random.choice(['image', 'text'])
+            else:
+                modality_to_retain = np.random.choice(['image', 'text', 'tabular'])
+            if modality_to_retain == 'image':
+                df.loc[index, image_columns] = df.loc[index, image_columns].fillna('retained_image_value')
+            elif modality_to_retain == 'text':
+                df.loc[index, text_columns] = df.loc[index, text_columns].fillna('retained_text_value')
+            elif modality_to_retain == 'tabular':
+                df.loc[index, tabular_columns] = df.loc[index, tabular_columns].fillna('retained_tabular_value')
+    
+    return df
 
 def _flatten_dict(data):
     flattened = {}
@@ -249,6 +326,13 @@ def get_args():
     parser.add_argument(
         "--manifold_mixup",  action='store_true', default=False, 
     )
+    parser.add_argument(
+        "--modeling_missingness",  action='store_true', default=False, 
+    )
+    parser.add_argument(
+        "--modeling_missingness_drop_rate",  type=float, default=0.
+    )
+    
     
     
 
@@ -439,8 +523,11 @@ def run(
 
     get_dataset_info = params.pop("get_dataset_info")
     use_ensemble = params.pop("use_ensemble")
+    modeling_missingness = params.pop("modeling_missingness")
     if use_ensemble:
         use_avg_ensemble = params.pop("use_avg_ensemble")
+    if modeling_missingness:
+        modeling_missingness_drop_rate = params.pop("modeling_missingness_drop_rate")
 
     if get_dataset_info:
 
@@ -553,28 +640,28 @@ def run(
 
             return res_dict
 
-        def get_image_missing_ratio(data_tokens, column_types, missing_ratios):
-            fail_tokens = 0
-            for col in data_tokens.columns:
-                if "image" in column_types[col]:
-                    for a in data_tokens[col]:
-                        try:
-                            p = Image.open(a)
-                        except Exception:
-                            fail_tokens += 1
-                    break
-            missing_ratios[col] = fail_tokens / len(data_tokens)
-            return missing_ratios
+        # def get_image_missing_ratio(data_tokens, column_types, missing_ratios):
+        #     fail_tokens = 0
+        #     for col in data_tokens.columns:
+        #         if "image" in column_types[col]:
+        #             for a in data_tokens[col]:
+        #                 try:
+        #                     p = Image.open(a)
+        #                 except Exception:
+        #                     fail_tokens += 1
+        #             break
+        #     missing_ratios[col] = fail_tokens / len(data_tokens)
+        #     return missing_ratios
 
 
 
-        def get_type_missing_ratios(missing_ratios, column_types):
-            type_missing_ratios = {}
-            for col, missing_rate in missing_ratios.items():
-                if column_types[col] not in type_missing_ratios:
-                    type_missing_ratios[column_types[col]] = []
-                type_missing_ratios[column_types[col]].append(missing_rate)
-            return type_missing_ratios
+        # def get_type_missing_ratios(missing_ratios, column_types):
+        #     type_missing_ratios = {}
+        #     for col, missing_rate in missing_ratios.items():
+        #         if column_types[col] not in type_missing_ratios:
+        #             type_missing_ratios[column_types[col]] = []
+        #         type_missing_ratios[column_types[col]].append(missing_rate)
+        #     return type_missing_ratios
 
         predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
         train_data.data = predictor._learner._train_data
@@ -933,7 +1020,95 @@ def run(
         for c in zeroshot_configs:
             print(c)
         print("best_ensemble_weights: ", best_ensemble_weights)
+    elif modeling_missingness: # 模拟缺失
+        predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
+        column_types = []
+        predictor._learner.infer_column_types(column_types=column_types)
+        # 输出当前数据的col types
+        column_types = predictor._learner._column_types
+
         
+        del column_types[label_column] # label 不参与drop
+        train_data.data = drop_modalities(train_data.data, a=modeling_missingness_drop_rate, column_types=column_types)
+        if val_data.data != None:
+            val_data.data = drop_modalities(val_data.data, a=modeling_missingness_drop_rate, column_types=column_types)
+        # train_data.data.to_csv("train_modeling_2.csv")
+
+        #  输出缺失比例
+        train_missing_ratios = {col: train_data.data[col].isna().sum() / len(train_data.data) for col in train_data.data.columns}
+        print("train col types: ", column_types)
+        print("train_missing_ratios: ", train_missing_ratios)
+
+        # # 输出每种type的缺失比例(image_text_tabular)
+        # train_type_missing_ratios =  get_type_missing_ratios(train_missing_ratios, predictor._learner._column_types)
+        # for cate_type, value in train_type_missing_ratios.items():
+        #     print(f"Missing ratios of {cate_type} in training: {np.round(np.mean(value)*100, 3)}%.")
+        #     v = [np.round(vv*100, 3) for vv in value]
+        #     print(f"Missing ratios of each col of {cate_type} in training: {v}%.")
+
+        predictor = MultiModalPredictor(**predictor_args)
+        fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
+        
+
+        utc_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+        if eval_model_path != None:
+            predictor = predictor.load(eval_model_path)
+            training_duration = 0.
+        else:
+            if resume:
+                predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) # 如果不写resume = True，就会加载这个ckpt后从epoch 0开始训练。
+            start_time = time.time()
+            predictor.fit(**fit_args)
+            end_time = time.time()
+            training_duration = round(end_time - start_time, 1)
+
+        ori_test_data = copy.deepcopy(test_data)
+        for drop_rate in [0.1,0.3,0.5]:
+            test_data_dict = {dataset_name: ori_test_data}
+            for dataset_name, test_data in test_data_dict.items():
+                test_data_data = drop_modalities(test_data.data, a=drop_rate,column_types=column_types)
+                evaluate_args = {
+                    "data": test_data_data,
+                    "label": label_column,
+                    "metrics": test_data.metric if metrics_func is None else metrics_func,
+                }
+
+                if test_data.problem_type == IMAGE_TEXT_SIMILARITY:
+                    evaluate_args["query_data"] = test_data_data[test_data.text_columns[0]].unique().tolist()
+                    evaluate_args["response_data"] = test_data_data[test_data.image_columns[0]].unique().tolist()
+                    evaluate_args["cutoffs"] = [1, 5, 10]
+
+                start_time = time.time()
+                scores = predictor.evaluate(**evaluate_args)
+                end_time = time.time()
+                predict_duration = round(end_time - start_time, 1)
+
+                if "#" in framework:
+                    framework, version = framework.split("#")
+                else:
+                    framework, version = framework, ag_version
+
+                metric_name = test_data.metric if metrics_func is None else metrics_func.name
+                metrics = {
+                    "id": "id/0",  # dummy id to make it align with amlb benchmark output
+                    "task": dataset_name,
+                    "framework": framework,
+                    "constraint": constraint,
+                    "version": version,
+                    "fold": 0,
+                    "type": predictor.problem_type,
+                    "metric": metric_name,
+                    "utc": utc_time,
+                    "training_duration": training_duration,
+                    "predict_duration": predict_duration,
+                    "scores": scores,
+                }
+                subdir = f"{framework}.{dataset_name}.{constraint}.local"
+                # 不同drop rate下的test
+                save_metrics(os.path.join(metrics_dir, subdir, f"scores_{drop_rate}"), metrics)
+
+      
+
     else:
         fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
 
@@ -1034,6 +1209,9 @@ if __name__ == "__main__":
     args.params['use_ensemble'] = args.use_ensemble
     if args.use_ensemble:
         args.params['use_avg_ensemble'] = args.use_avg_ensemble
+    args.params['modeling_missingness'] = args.modeling_missingness
+    if args.modeling_missingness:
+        args.params['modeling_missingness_drop_rate'] = args.modeling_missingness_drop_rate
     args.params['seed'] = args.seed
 
     args.params['hyperparameters']['model.hf_text.max_text_len'] = args.max_text_len
