@@ -354,6 +354,7 @@ gas:
 
 skin_cancer:
   <<: *base
+  url: s3://automl-mm-bench/skin_cancer_processed.zip
   feature_columns:
     - image_id
     - dx_type
@@ -384,6 +385,7 @@ goodreads:
 
 goodreads_convert_to_log:
   <<: *base
+  url: s3://automl-mm-bench/goodreads_processed.zip
   feature_columns:
     - bookformat
     - desc
@@ -523,6 +525,7 @@ CD18:
 
 CD18_convert_to_log:
   <<: *base
+  url: s3://automl-mm-bench/CD18_processed.zip
   feature_columns:
     - name
     - Model
@@ -584,6 +587,7 @@ mocheg:
 
 wikiart:
   <<: *base
+  url: s3://automl-mm-bench/wikiart_processed.zip
   feature_columns:
     - file
     - genre
@@ -620,6 +624,7 @@ DVM-CAR:
 
 DVM-CAR_convert_to_log:
   <<: *base
+  url: s3://automl-mm-bench/DVM-CAR_processed.zip
   feature_columns:
     - Maker
     - Genmodel
@@ -646,6 +651,7 @@ DVM-CAR_convert_to_log:
 
 Memotion:
   <<: *base
+  url: s3://automl-mm-bench/Memotion_processed.zip
   feature_columns:
     - image_name
     - text_corrected
@@ -656,6 +662,7 @@ Memotion:
 
 UPMC-Food101:
   <<: *base
+  url: s3://automl-mm-bench/UPMC-Food101_processed.zip
   feature_columns:
     - image
     - text
@@ -752,6 +759,7 @@ amazon-books-reviews:
 
 KARD:
   <<: *base
+  url: s3://automl-mm-bench/KARD_processed.zip
   feature_columns:
     - name
     - studio
@@ -798,6 +806,7 @@ fashion-dataset:
   
 covid-chestxray-dataset:
   <<: *base
+  url: s3://automl-mm-bench/covid-chestxray-dataset_processed.zip
   feature_columns:
     - offset
     - sex
@@ -911,6 +920,7 @@ Fishpond:
 
 art-price-dataset:
   <<: *base
+  url: s3://automl-mm-bench/art-price-dataset_processed.zip
   feature_columns:
     - images
     - price
@@ -960,6 +970,7 @@ Harumanis_mango:
 
 CCD:
   <<: *base
+  url: s3://automl-mm-bench/CCD_processed.zip
   feature_columns:
     - timing
     - weather
@@ -1020,6 +1031,7 @@ action_effect_entailment:
 
 action_effect_pred:
   <<: *base
+  url: s3://automl-mm-bench/action_effect_pred_processed.zip
   feature_columns:
     - descriptions
     - images
@@ -1046,6 +1058,7 @@ impressions_dataset:
 
 fakeddit:
   <<: *base
+  url: s3://automl-mm-bench/fakeddit_processed.zip
   splits:
     - train
     - validation
