@@ -788,8 +788,8 @@ def run(
                 f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/",
                 # lf-llm
                 f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/",
-                # early fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
+                # # early fusion
+                # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
                 # lf-sequential fusion
                 f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/",
                 # positive loss
@@ -806,18 +806,23 @@ def run(
                 f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/",
                 
             ]
-            if dataset_name in ["skin_cancer", "CD18_convert_to_log"]:
-                # convert numerical
-                all_configs.append("convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/")
-            if dataset_name in ["skin_cancer", "CD18_convert_to_log", "DVM-CAR"]:
-                all_configs.append(
+            all_configs.append(
                     # modality drop=0.3
                     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
                 )
 
+            if dataset_name in ["skin_cancer", "CD18_convert_to_log"]:
+                # convert numerical
+                all_configs.append("convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/")
+            if dataset_name in ["skin_cancer", "CD18_convert_to_log", "DVM-CAR"]:
+                # all_configs.append(
+                #     # modality drop=0.3
+                #     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
+                # )
+
                 # miss embed
                 all_configs.append(
-                    "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/use_miss_token_True/"
+                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/"
                 )
 
                 
