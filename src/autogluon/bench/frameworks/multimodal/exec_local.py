@@ -758,6 +758,40 @@ def run(
         
         if dataset_name in ["fake", "qaa", "qaq", "airbnb","channel", "cloth"]:
             prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
+            all_configs_dict = {
+                # baseline+
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/": "Baseline+",
+                # lf-transformer
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/": "LF-Transformer",
+                # lf-aligned
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/": "LF-Aligned",
+                # lf-llm
+                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/max_epochs_20/use_llama7B_fusion/": "LF-LLM",
+                # early fusion
+                f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/": "Early Fusion",
+                # lf-sequential fusion
+                f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/": "LF-SF",
+                # positive loss
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/KL_feature_align_loss/": "Positive-only",
+                # pos-neg loss
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
+                # convert-categorical 
+                f"convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/": "Convert Categorical",
+                # input aug
+                f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/": "Input Aug.",
+                # fea independent aug
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/manifold_mixup/": "Feature Aug.(Inde.)",
+                # fea joint aug
+                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
+                # modality drop=0.3
+                "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/": "Modality Dropout",
+                # convert numerical
+                "convert_to_text_False/ft_transformer_pretrained_False/convert_to_text_numerical/auxiliary_weight_0.0/max_epochs_20/": "Convert Numerical",
+                # miss embed
+                "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/use_miss_token_True/use_miss_token_True_numerical/": "Learnable Embed(Numerical)"
+
+            }
+            
             all_configs = [
                 # baseline+
                 f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
@@ -785,16 +819,20 @@ def run(
                 f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/LeMDA/lemda_layer_6/",
                 
             ]
+            all_configs.append(
+                # modality drop=0.3
+                "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/"
+            )
             if dataset_name in ["airbnb", "channel", "cloth"]:
                 all_configs.append(
                     # convert numerical
                     "convert_to_text_False/ft_transformer_pretrained_False/convert_to_text_numerical/auxiliary_weight_0.0/max_epochs_20/"
                 )
             if dataset_name in ["fake", "airbnb", "cloth"]:
-                all_configs.append(
-                    # modality drop=0.3
-                    "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/"
-                )
+                # all_configs.append(
+                #     # modality drop=0.3
+                #     "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/"
+                # )
                 if dataset_name in ["airbnb"]:
                     # miss embed
                     all_configs.append(
@@ -1077,7 +1115,12 @@ def run(
             # print("test_ensemble_weights: ", test_ensemble_weights) # 输出的weight顺序不一定和all_configs一致。
             print("selected: ")
             for c in zeroshot_configs:
-                print(c)
+                if "seed" in c:
+                    c = c.split('seed_')[0]
+                else:
+                    c = c.split("run1/models/model.ckpt")[0]
+                c = c.split(prefix_str)[-1]
+                print(all_configs_dict[c])
             print("best_ensemble_weights: ", best_ensemble_weights)
             print()
             print()
@@ -1099,7 +1142,12 @@ def run(
             # print(msg)
         print("final selected: ")
         for c in zeroshot_configs:
-            print(c)
+            if "seed" in c:
+                c = c.split('seed_')[0]
+            else:
+                c = c.split("run1/models/model.ckpt")[0]
+            c = c.split(prefix_str)[-1]
+            print(all_configs_dict[c])
         print("best_ensemble_weights: ", best_ensemble_weights)
     elif modeling_missingness: # 模拟缺失
         predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
