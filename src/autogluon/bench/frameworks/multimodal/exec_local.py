@@ -922,6 +922,40 @@ def run(
                 
         else:
             prefix_str = f"ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
+            all_configs_dict = {
+                # baseline+
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/": "Baseline+",
+                # lf-transformer
+                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/auxiliary_weight_0.0/": "LF-Transformer",
+                # lf-aligned
+                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/": "LF-Aligned",
+                # lf-llm
+                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/": "LF-LLM",
+                # # early fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/": "Early Fusion",
+                # lf-sequential fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion_state/auxiliary_weight_0.0/": "LF-SF",
+                # positive loss
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/": "Positive-only",
+                # pos-neg loss
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
+                # convert-categorical 
+                f"no_img_aug/epoch_20/auxiliary_weight_0.0/categorical_template_latex/": "Convert Categorical",
+                # input aug
+                f"convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/": "Input Aug.",
+                # fea independent aug
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/": "Feature Aug.(Inde.)",
+                # fea joint aug
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
+                # modality drop=0.3
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/": "Modality Dropout",
+                # convert numerical
+                "convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/": "Convert Numerical",
+                # miss embed
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_numerical/": "Learnable Embed(Numerical)",
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/": "Learnable Embed(Image)",
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/modality_drop_rate_0.3/": "Modality Drop.+Learn. Embed(Image)"
+            }
             all_configs = [
                 # baseline+
                 f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/",
@@ -931,8 +965,8 @@ def run(
                 f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/",
                 # lf-llm
                 f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/",
-                # # early fusion
-                # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
+                # early fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
                 # lf-sequential fusion
                 f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion_state/auxiliary_weight_0.0/",
                 # positive loss
@@ -972,6 +1006,9 @@ def run(
                     # miss embed
                     all_configs.append(
                         f"/home/ubuntu/drive2/{prefix_str}convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/"
+                    )
+                all_configs.append(
+                        f"/home/ubuntu/drive2/{prefix_str}convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/modality_drop_rate_0.3/"
                     )
 
         if params["seed"] == 0:
