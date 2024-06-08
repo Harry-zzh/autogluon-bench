@@ -820,6 +820,41 @@ def run(
                 )
         elif dataset_name in   ["CCD", "skin_cancer",  "wikiart", "CD18_convert_to_log", "DVM-CAR_convert_to_log",  ]:
             prefix_str = f"ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
+            all_configs_dict = {
+                # baseline+
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/": "Baseline+",
+                # lf-transformer
+                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/auxiliary_weight_0.0/": "LF-Transformer",
+                # lf-aligned
+                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/": "LF-Aligned",
+                # lf-llm
+                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/": "LF-LLM",
+                # early fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/": "Early Fusion",
+                # lf-sequential fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/": "LF-SF",
+                # positive loss
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/": "Positive-only",
+                # pos-neg loss
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
+                # convert-categorical 
+                f"no_img_aug/epoch_20/auxiliary_weight_0.0/categorical_template_latex/no_hf_text_insert_sep_False/": "Convert Categorical",
+                # input aug
+                f"convert_to_text_False/epoch_20/auxiliary_weight_0.0/": "Input Aug.",
+                # fea independent aug
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/": "Feature Aug.(Inde.)",
+                # fea joint aug
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
+                # modality drop=0.3
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/": "Modality Dropout",
+                # convert numerical
+                "convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/": "Convert Numerical",
+                # miss embed
+                # "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/": "Learnable Embed(Numerical)",
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/": "Learnable Embed(Image)",
+                # miss embed image + dropout0.3
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/": "Modality Drop.+Learn. Embed(Image)"
+            }
             all_configs = [
                 # baseline+
                 f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/",
@@ -829,8 +864,8 @@ def run(
                 f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/",
                 # lf-llm
                 f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/",
-                # # early fusion
-                # f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
+                # early fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
                 # lf-sequential fusion
                 f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/",
                 # positive loss
@@ -855,7 +890,7 @@ def run(
             if dataset_name in ["skin_cancer", "CD18_convert_to_log"]:
                 # convert numerical
                 all_configs.append("convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/")
-            if dataset_name in ["skin_cancer", "CD18_convert_to_log", "DVM-CAR"]:
+            if dataset_name in ["skin_cancer", "CD18_convert_to_log", "DVM-CAR_convert_to_log"]:
                 # all_configs.append(
                 #     # modality drop=0.3
                 #     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
@@ -865,6 +900,12 @@ def run(
                 all_configs.append(
                     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/"
                 )
+
+                # miss embed(image) + modality drop 0.3
+                all_configs.append(
+                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/"
+                )
+
 
                 
         else:
@@ -1101,8 +1142,16 @@ def run(
                 c = c.split('seed_')[0]
             else:
                 c = c.split("run1/models/model.ckpt")[0]
+            
             c = c.split(prefix_str)[-1]
-            print(all_configs_dict[c])
+            
+            if dataset_name == "skin_cancer" and all_configs_dict[c] == "Learnable Embed(Image)":
+                print("Learnable Embed(Numerical)")
+            else:
+                print(all_configs_dict[c])
+
+
+              
         print("best_ensemble_weights: ", best_ensemble_weights)
     elif simulate_missingness: 
         predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
