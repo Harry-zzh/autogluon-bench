@@ -103,6 +103,7 @@ for seed in [0,1,2]:
     print()
 
 ####### 计算平均被选中的次数
+print(dataset_weight_dict)
 num_datasets = len(dataset_weight_dict)
 num_seeds = len(next(iter(dataset_weight_dict.values())))
 print("num_seeds: ", num_seeds)
@@ -142,63 +143,76 @@ for dataset, seeds in dataset_weight_dict.items():
                 total_model_weights[model] = []
             total_model_weights[model].append(weight)
 
-# 计算每个模型在每个数据集上的平均权重
-average_weights_per_dataset = {}
-for dataset, models in model_weights_per_dataset.items():
-    average_weights_per_dataset[dataset] = {}
-    for model, weights in models.items():
-        average_weights_per_dataset[dataset][model] = sum(weights) / num_seeds
 
-# 计算每个模型在所有数据集上的平均权重
-average_weights_overall = {}
+draw = True
+if draw:
+    # 计算每个模型在每个数据集上的平均权重
+    average_weights_per_dataset = {}
+    for dataset, models in model_weights_per_dataset.items():
+        average_weights_per_dataset[dataset] = {}
+        for model, weights in models.items():
+            average_weights_per_dataset[dataset][model] = sum(weights) / num_seeds
+
+    # 计算每个模型在所有数据集上的平均权重
+    average_weights_overall = {}
 
 
-for model, weights in total_model_weights.items():
-    average_weights_overall[model] = sum(weights) / (num_datasets * num_seeds)
+    for model, weights in total_model_weights.items():
+        average_weights_overall[model] = sum(weights) / (num_datasets * num_seeds)
 
-# 输出结果
-print("每个模型在每个数据集上的平均权重：")
-for dataset, models in average_weights_per_dataset.items():
-    print(f"{dataset}:")
-    for model, avg_weight in models.items():
-        print(f"  {model}: {avg_weight:.4f}")
-   
-    # print(model_weights_per_dataset[dataset]["/home/ubuntu/drive2/ag_bench_runs/multimodal/fake/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/"])
-    # break
-
-print("\n每个模型在所有数据集上的平均权重：")
-for model, avg_weight in average_weights_overall.items():
-    print(f"{model}: {avg_weight:.4f}")
-
-print("模型总个数：", len(model_weights_per_dataset[dataset]))
-
-# dataset = "fake"
-# for seed in [0,1,2]:
-#     print(len(dataset_weight_dict[dataset][seed]["selected_models"]))
-#     for i, model in enumerate(dataset_weight_dict[dataset][seed]["selected_models"]):
-#         if "/home/ubuntu/drive2/ag_bench_runs/multimodal/fake/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/" in model:
-#             print(model)
-#             print(dataset_weight_dict[dataset][seed]["best_ensemble_weights"][i])
-#             print()
+    # 输出结果
+    print("每个模型在每个数据集上的平均权重：")
+    for dataset, models in average_weights_per_dataset.items():
+        print(f"{dataset}:")
+        for model, avg_weight in models.items():
+            print(f"  {model}: {avg_weight:.4f}")
     
-# 画柱状图
-models = list(average_weights_overall.keys())
-print(len(models))
-average_weights = list(average_weights_overall.values())
+        # print(model_weights_per_dataset[dataset]["/home/ubuntu/drive2/ag_bench_runs/multimodal/fake/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/"])
+        # break
 
-# 先对模型的平均权重按降序排序
-sorted_models = sorted(average_weights_overall.items(), key=lambda x: x[1], reverse=True)
-models_sorted = [model for model, weight in sorted_models]
-average_weights_sorted = [weight for model, weight in sorted_models]
+    print("\n每个模型在所有数据集上的平均权重：")
+    for model, avg_weight in average_weights_overall.items():
+        print(f"{model}: {avg_weight:.4f}")
+
+    print("模型总个数：", len(average_weights_overall.keys()))
+    print(total_model_weights)
+
+    # dataset = "fake"
+    # for seed in [0,1,2]:
+    #     print(len(dataset_weight_dict[dataset][seed]["selected_models"]))
+    #     for i, model in enumerate(dataset_weight_dict[dataset][seed]["selected_models"]):
+    #         if "/home/ubuntu/drive2/ag_bench_runs/multimodal/fake/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/" in model:
+    #             print(model)
+    #             print(dataset_weight_dict[dataset][seed]["best_ensemble_weights"][i])
+    #             print()
+        
+    # 画柱状图
+    models = list(average_weights_overall.keys())
+    print(len(models))
+    average_weights = list(average_weights_overall.values())
+
+    # 先对模型的平均权重按降序排序
+    sorted_models = sorted(average_weights_overall.items(), key=lambda x: x[1], reverse=True)
+    models_sorted = [model for model, weight in sorted_models]
+    average_weights_sorted = [weight for model, weight in sorted_models]
 
 
-plt.figure(figsize=(10, 6))
-plt.bar(models_sorted, average_weights_sorted, color='skyblue')
-plt.xlabel('Model Name')
-plt.ylabel('Average Weight')
-plt.title('Average Weight of Models (Text+Tabular)')
-plt.xticks(rotation=45)
-plt.tight_layout()
-# 显示图表
-plt.savefig("text_tabular_sorted.png")
-print("save to text_tabular_sorted.png")
+    # 计算所有模型的平均权重和中位数
+    overall_mean = np.mean(average_weights_sorted)
+    overall_median = np.median(average_weights_sorted)
+
+    plt.figure(figsize=(10,6))
+    plt.barh(models_sorted, average_weights_sorted, color='skyblue')
+    # plt.xlabel('Model Name', fontsize=20)
+    plt.axhline(overall_mean, color='red', linestyle='dashed', linewidth=1, label=f'Mean: {overall_mean:.4f}')
+    # plt.axhline(overall_median, color='green', linestyle='dashed', linewidth=1, label=f'Median: {overall_median:.4f}')
+    plt.ylabel('Average Weight')
+    plt.title('Average Weight of Models (Text+Tabular)')
+    # plt.xticks(rotation=60,)
+    # plt.yticks([])
+    plt.tight_layout()
+
+    # 显示图表
+    plt.savefig("text_tabular_sorted.png")
+    plt.savefig("text_tabular_sorted.pdf")
+    print("save to text_tabular_sorted.png")
