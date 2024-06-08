@@ -48,47 +48,32 @@ def get_args():
     parser.add_argument(
         "--eval_model_path", type=str, default=None, help="Model checkpoint path for evaluation."
     )
-
-    ### model parmas:
-    parser.add_argument(
-        "--weight_decay", type=float, default=0.001
-    )
-    parser.add_argument(
-        "--lr_decay", type=float, default=0.9, help="It is used only when lr_choice is layerwise_decay"
-    )
-    parser.add_argument(
-        "--lr_schedule", type=str, default="cosine_decay"
-    )
-    parser.add_argument(
-        "--warmup_steps", type=float, default=0.1
-    )
-    parser.add_argument(
-        "--gradient_clip_val", default=1.
-    )
-    parser.add_argument(
-        "--top_k_average_method", type=str, default="greedy_soup"
-    )
-    parser.add_argument(
-        "--peft", type=str, default="null", help="Can be 'bit_fit' (only finetune bias), 'norm_fit' (finetune the normalization terms + bias terms), lora (LoRA Adaptations only), lora_bias (LoRA Adaptation + bit_fit), lora_norm (LoRA Adaptation + norm_fit), or null"
-    )
-    parser.add_argument(
-        "--categorical_convert_to_text", action='store_false', default=True, help="convert categorical columns to text or not."
-    )
     parser.add_argument(
         "--max_epochs", type=int, default=10, help="num of training epochs."
-    )
-    parser.add_argument(
-        "--hf_text_ckpt", type=str, default="microsoft/deberta-v3-base", help="text ckpt"
-    )
-    parser.add_argument(
-        "--lora_r", type=int, default=8
     )
     parser.add_argument(
         "--lr", type=float, default=0.0001
     )
 
-    # 
+    ### Basic Tricks
+    parser.add_argument(
+        "--top_k_average_method", type=str, default="greedy_soup"
+    )
+    parser.add_argument(
+        "--gradient_clip_val", default=1.
+    )
+    parser.add_argument(
+        "--warmup_steps", type=float, default=0.1
+    )
+    parser.add_argument(
+        "--lr_decay", type=float, default=0.9, help="It is used only when lr_choice is layerwise_decay"
+    )
+
     
+    ### Converting Tabular Data into Text
+    parser.add_argument(
+        "--categorical_convert_to_text", type=bool, default=True, help="convert categorical columns to text or not."
+    )
 
     
     args = parser.parse_args()
@@ -251,21 +236,6 @@ def run(
     if val_data is not None:
         predictor_args["eval_metric"] = val_data.metric
 
-    if train_data.problem_type == IMAGE_SIMILARITY:
-        predictor_args["query"] = train_data.image_columns[0]
-        predictor_args["response"] = train_data.image_columns[1]
-        predictor_args["match_label"] = train_data.match_label
-    elif train_data.problem_type == IMAGE_TEXT_SIMILARITY:
-        predictor_args["query"] = train_data.text_columns[0]
-        predictor_args["response"] = train_data.image_columns[0]
-        del predictor_args["label"]
-    elif train_data.problem_type == TEXT_SIMILARITY:
-        predictor_args["query"] = train_data.text_columns[0]
-        predictor_args["response"] = train_data.text_columns[1]
-        predictor_args["match_label"] = train_data.match_label
-    elif train_data.problem_type == OBJECT_DETECTION:
-        predictor_args["sample_data_path"] = train_data.data
-
     metrics_func = None
     if custom_metrics is not None and custom_metrics["function_name"] == train_data.metric:
         metrics_func = load_custom_metrics(custom_metrics=custom_metrics)
@@ -343,33 +313,25 @@ if __name__ == "__main__":
     args.framework = args.params['framework']
     args.params =  yaml.safe_load(open(os.path.join(args.params['custom_resource_dir'],"multimodal_frameworks.yaml"), 'r'))[args.framework]['params']
     
-    ### model params:
-    args.params['hyperparameters']["optimization.weight_decay"] = args.weight_decay
+    args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
+    args.params['hyperparameters']['optimization.learning_rate'] = args.lr
+
+    ### Basic Tricks
     args.params['hyperparameters']["optimization.lr_decay"] = args.lr_decay
-    args.params['hyperparameters']["optimization.lr_schedule"] = args.lr_schedule
     args.params['hyperparameters']["optimization.warmup_steps"] = args.warmup_steps
     args.params['hyperparameters']["optimization.gradient_clip_val"] = args.gradient_clip_val
     args.params['hyperparameters']["optimization.top_k_average_method"] = args.top_k_average_method
-    args.params['hyperparameters']["optimization.efficient_finetune"] = args.peft
+
+    ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
-    args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
-    args.params['hyperparameters']['model.hf_text.checkpoint_name'] = args.hf_text_ckpt
-    args.params['hyperparameters']['optimization.lora.r'] = args.lora_r
-    args.params['hyperparameters']['optimization.learning_rate'] = args.lr
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
-    
-    print(type(args.params['hyperparameters']["optimization.gradient_clip_val"]))
-    print(args.params)
-    # ['framework']['params']
-
     if args.custom_metrics is not None:
         with open(args.custom_metrics, 'r') as f:
             args.custom_metrics = yaml.safe_load(f)
-    print("args:")
-    print(args)
+
     run(
         dataset_name=args.dataset_name,
         framework=args.framework,
@@ -381,14 +343,3 @@ if __name__ == "__main__":
         custom_metrics=args.custom_metrics,
         eval_model_path=args.eval_model_path
     )
-
-   
-'''
-args:
-Namespace(dataset_name='imdb', framework='AutoGluon_stable', 
-benchmark_dir='ag_bench_runs/multimodal/ag_bench_20231223T123713', 
-metrics_dir='ag_bench_runs/multimodal/ag_bench_20231223T123713/results', 
-constraint=None, params={'presets': 'best_quality', 
-'hyperparameters': {'optimization.max_epochs': 10}}, 
-custom_dataloader={'dataloader_file': 'sample_configs/dataloaders/text_tabular_dataloader.py', 'class_name': 'TextTabularDataLoader', 'dataset_config_file': 'sample_configs/dataloaders/text_tabular_datasets.yaml'}, custom_metrics=None)
-'''
