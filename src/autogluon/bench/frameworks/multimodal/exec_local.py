@@ -1274,7 +1274,10 @@ if __name__ == "__main__":
 
     ### Cross-modal alignment
     if args.alignment_loss != None:
-        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
+        if args.use_fusion_transformer:
+            args.params['hyperparameters'][f'model.fusion_transformer.alignment_loss'] = args.alignment_loss
+        else:
+            args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
     if args.contrastive_loss != None:
         args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
         args.params['hyperparameters'][f'optimization.contrastive_loss_w'] =  args.contrastive_loss_w
@@ -1284,13 +1287,20 @@ if __name__ == "__main__":
     if args.not_use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
     if args.LeMDA:
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+        if args.use_fusion_transformer:
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.turn_on'] = True
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.n_layer'] = args.LeMDA_layer
+
+        else:
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
+
         args.params['hyperparameters'][f'optimization.aug_optimizer'] = True
         args.params['hyperparameters'][f'optimization.aug_turn_on'] = True
         args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
+    
     if args.manifold_mixup:
         args.params['hyperparameters'][f'optimization.manifold_mixup'] = True
         args.params['hyperparameters'][f'model.timm_image.manifold_mixup'] = True
