@@ -1473,16 +1473,22 @@ if __name__ == "__main__":
                 args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
 
     if args.LeMDA:
-      
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+        if args.use_fusion_transformer:
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.turn_on'] = True
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.arch'] = args.LeMDA_arch
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.n_layer'] = args.LeMDA_layer
+
+        else:
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
+
         args.params['hyperparameters'][f'optimization.aug_optimizer'] = True
         args.params['hyperparameters'][f'optimization.aug_turn_on'] = True
         args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
-
+        
     if args.modality_drop_rate > 0.:
         args.params['hyperparameters'][f'data.modality_drop_ratio'] = args.modality_drop_rate
 
@@ -1493,7 +1499,10 @@ if __name__ == "__main__":
     #     args.params['teacher_predictor'] = None
 
     if args.alignment_loss != None:
-        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
+        if args.use_fusion_transformer:
+            args.params['hyperparameters'][f'model.fusion_transformer.alignment_loss'] = args.alignment_loss
+        else:
+            args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
 
     if args.contrastive_loss != None:
         args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
