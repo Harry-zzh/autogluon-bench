@@ -842,6 +842,38 @@ def run(
 
         elif dataset_name in ["persuasive_techniques",  "Memotion", "UPMC-Food101","action_effect_pred", "fakeddit"]:
             prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
+            all_configs_dict = {
+                # baseline+
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/": "Baseline+",
+                # lf-transformer
+                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/auxiliary_weight_0.0/": "LF-Transformer",
+                # lf-aligned
+                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/": "LF-Aligned",
+                # lf-llm
+                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/": "LF-LLM",
+                # early fusion
+                f"convert_to_text_False/no_img_aug/early_fusion_True/epoch_20/auxiliary_weight_0.0/": "Early Fusion",
+                # lf-sequential fusion
+                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/": "LF-SF",
+                # positive loss
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/": "Positive-only",
+                # pos-neg loss
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
+                # convert-categorical 
+                f"convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/": "Convert Categorical",
+                # input aug
+                f"convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/": "Input Aug.",
+                # fea independent aug
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/": "Feature Aug.(Inde.)",
+                # fea joint aug
+                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
+                # modality drop=0.3
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/": "Modality Dropout",
+                # miss embed
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/": "Learnable Embed(Image)",
+                # Modality Drop.+Learn. Embed(Image)
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/": "Modality Drop.+Learn. Embed(Image)"
+            }
             all_configs = [
                 # baseline+
                 f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/",
@@ -867,14 +899,23 @@ def run(
                 f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/",
                 
             ]
+            # modality dropout=0.3
+            all_configs.append(
+                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
+            )
             if dataset_name in ["Memotion", "fakeddit"]:
-                # modality dropout=0.3
-                all_configs.append(
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-                )
+                # # modality dropout=0.3
+                # all_configs.append(
+                #     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
+                # )
                 # learnable embed
+                if dataset_name in ["fakeddit"]:
+                    all_configs.append(
+                        "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/"
+                    )
+                # modality dropout=0.3 + learnable embed
                 all_configs.append(
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/"
+                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/"
                 )
         elif dataset_name in   ["CCD", "skin_cancer",  "wikiart", "CD18_convert_to_log", "DVM-CAR_convert_to_log",  ]:
             prefix_str = f"ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
@@ -1486,16 +1527,22 @@ if __name__ == "__main__":
                 args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
 
     if args.LeMDA:
-      
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+        if args.use_fusion_transformer:
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.turn_on'] = True
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.arch'] = args.LeMDA_arch
+            args.params['hyperparameters'][f'model.fusion_transformer.augmenter.n_layer'] = args.LeMDA_layer
+
+        else:
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
+            args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
+
         args.params['hyperparameters'][f'optimization.aug_optimizer'] = True
         args.params['hyperparameters'][f'optimization.aug_turn_on'] = True
         args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.arch'] = args.LeMDA_arch
-        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
-
+        
     if args.modality_drop_rate > 0.:
         args.params['hyperparameters'][f'data.modality_drop_ratio'] = args.modality_drop_rate
 
@@ -1506,7 +1553,10 @@ if __name__ == "__main__":
     #     args.params['teacher_predictor'] = None
 
     if args.alignment_loss != None:
-        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
+        if args.use_fusion_transformer:
+            args.params['hyperparameters'][f'model.fusion_transformer.alignment_loss'] = args.alignment_loss
+        else:
+            args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
 
     if args.contrastive_loss != None:
         args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
@@ -1525,8 +1575,8 @@ if __name__ == "__main__":
         args.params['hyperparameters'][f'model.ft_transformer.manifold_mixup_a'] =  args.manifold_mixup_a
         args.params['hyperparameters']["env.per_gpu_batch_size"] = 2
         args.params['hyperparameters'][f'model.fusion_mlp.manifold_mixup'] = True
-        
-    
+        if args.clip_fusion_mlp:
+            args.params['hyperparameters'][f'model.clip_fusion_mlp.manifold_mixup'] = True
     if args.mixup:
         args.params['hyperparameters']["data.mixup.turn_on"] = True
     # args.params['hyperparameters']["data.mixup.turn_on"] = True
