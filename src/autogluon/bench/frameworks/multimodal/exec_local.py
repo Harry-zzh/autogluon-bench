@@ -57,6 +57,9 @@ def get_args():
     parser.add_argument(
         "--auxiliary_weight", type=float, default=0., help="auxiliary loss weight for unimodal models."
     )
+    parser.add_argument(
+        "--seed", type=int, default=0,
+    )
 
     ### Basic Tricks
     parser.add_argument(
@@ -361,6 +364,7 @@ if __name__ == "__main__":
     
     args.params['hyperparameters']["optimization.max_epochs"] = args.max_epochs
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
+    args.params['seed'] = args.seed
 
     ### Basic Tricks
     args.params['hyperparameters']["optimization.lr_decay"] = args.lr_decay
@@ -387,10 +391,9 @@ if __name__ == "__main__":
 
     if args.sequential_fusion:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'sequential_fusion_mlp']
-        if args.auxiliary_weight != 0.1: # 0.1是默认的，把所有有weight这个参数的model都设置一下。
+        if args.auxiliary_weight != 0.1:
             args.params['hyperparameters']["model.sequential_fusion_mlp.weight"] = args.auxiliary_weight
-            # args.params['hyperparameters']["model.sequential_fusion_mlp.weight"] = args.auxiliary_weight
-    
+
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.sequential_fusion'] = True
         use_default_fusion = False
