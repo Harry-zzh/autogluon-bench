@@ -33,20 +33,6 @@ class TextTabularImageDataLoader:
         if split == 'test' and self.dataset_config['test_file'] == 'dev':
             split = 'dev'
 
-        
-        if "convert_to_log" in dataset_name:
-            # 定义正则表达式模式
-            pattern = r'(.+?)_convert_to_log'
-
-            # 使用正则表达式匹配字符串
-            match = re.match(pattern, dataset_name)
-
-            # 提取匹配的部分
-            if match:
-                dataset_name = match.group(1)
-                print(dataset_name)
-            else:
-                print("未找到匹配的部分")
         if self.dataset_config['data_folder']:
             self.data_folder = self.dataset_config['data_folder']
         else:
@@ -67,9 +53,9 @@ class TextTabularImageDataLoader:
 
         url = self.dataset_config["url"]
         file_name = url.split('/')[-1]
-        # download_file_path = os.path.join(get_data_home_dir(), file_name)
-        # download(url, download_file_path)
-        # protected_zip_extraction(download_file_path, sha1_hash=self.sha1sum, folder=self.local_dir())
+        download_file_path = os.path.join(get_data_home_dir(), file_name)
+        download(url, download_file_path)
+        protected_zip_extraction(download_file_path, sha1_hash=self.sha1sum, folder=self.local_dir())
 
         if split == 'train':
             self.data = pd.read_csv(os.path.join(self.base_folder(), self.dataset_config["train_file"]))
