@@ -86,7 +86,7 @@ def get_args():
         "--clip_fusion_mlp", action="store_true", default=False, help="Use clip for late fusion model."
     )
     parser.add_argument(
-        "--clip_best_quality", action="store_true", default=False, help="Use clip best quality"
+        "--clip_high_quality", action="store_true", default=False, help="Use clip high quality"
     )
     parser.add_argument(
         "--early_fusion", action="store_true", default=False
@@ -372,8 +372,8 @@ if __name__ == "__main__":
 
     if args.clip_fusion_mlp:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'clip_fusion_mlp', 'fusion_mlp']
-        if args.clip_best_quality:
-            args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14-336"
+        if args.clip_high_quality:
+            args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14"
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
     args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
