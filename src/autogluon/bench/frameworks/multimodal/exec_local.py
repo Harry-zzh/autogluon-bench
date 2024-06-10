@@ -125,6 +125,9 @@ def get_args():
     parser.add_argument(
         "--not_use_image_aug", type=bool, default=True,
     )
+    parser.add_argument(
+        "--LeMDA", action='store_true', default=False, help="Feature Aug(Joint)."
+    )
 
     
 
@@ -425,6 +428,13 @@ if __name__ == "__main__":
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
     if args.not_use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
+    if args.LeMDA:
+        args.params['hyperparameters'][f'model.fusion_mlp.augmenter.turn_on'] = True
+        args.params['hyperparameters'][f'optimization.aug_optimizer'] = True
+        args.params['hyperparameters'][f'optimization.aug_turn_on'] = True
+        args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
+        args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
+        args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
