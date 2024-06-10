@@ -133,6 +133,9 @@ def get_args():
     parser.add_argument(
         "--use_miss_token_embed",action='store_true', default=False,
     )
+    parser.add_argument(
+        "--modality_drop_rate", type=float, default=0.
+    )
 
 
     
@@ -446,6 +449,8 @@ if __name__ == "__main__":
     if args.use_miss_token_embed:
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+    if args.modality_drop_rate > 0.:
+        args.params['hyperparameters'][f'data.modality_drop_ratio'] = args.modality_drop_rate
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
