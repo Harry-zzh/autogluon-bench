@@ -118,6 +118,11 @@ def get_args():
         "--no_hf_text_insert_sep",action='store_false', default=True,
     )
 
+    ### Cross-modal alignment
+    parser.add_argument(
+        "--alignment_loss", type=str, default=None, help="positive-only alignment loss."
+    )
+
     ### Data Aug
     parser.add_argument(
         "--text_trivial_aug_maxscale", type=float, default=0.0, help="Text input aug."
@@ -432,6 +437,11 @@ if __name__ == "__main__":
     if args.no_hf_text_insert_sep == False:
         args.params['hyperparameters']["model.hf_text.insert_sep"] = False
     args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
+
+    ### Cross-modal alignment
+    if args.alignment_loss != None:
+        args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = "KL"
+    
 
     ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
