@@ -152,6 +152,9 @@ def get_args():
     parser.add_argument(
         "--LeMDA_layer", type=int, default=4,
     )
+    parser.add_argument(
+        "--manifold_mixup",  action='store_true', default=False, help="Use Feature Aug(Inde.) or not."
+    )
 
     ### Handling Missingness
     parser.add_argument(
@@ -872,6 +875,13 @@ if __name__ == "__main__":
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
         args.params['hyperparameters'][f'model.fusion_mlp.augmenter.n_layer'] = args.LeMDA_layer
+    if args.manifold_mixup:
+        args.params['hyperparameters'][f'optimization.manifold_mixup'] = True
+        args.params['hyperparameters'][f'model.timm_image.manifold_mixup'] = True
+        args.params['hyperparameters'][f'model.hf_text.manifold_mixup'] = True
+        args.params['hyperparameters'][f'model.ft_transformer.manifold_mixup'] = True
+        args.params['hyperparameters']["env.per_gpu_batch_size"] = 2
+        args.params['hyperparameters'][f'model.fusion_mlp.manifold_mixup'] = True
     
     ### Handling Missingness
     if args.use_miss_token_embed:
