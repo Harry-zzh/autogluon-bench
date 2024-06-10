@@ -1347,6 +1347,7 @@ if __name__ == "__main__":
         args.params['simulate_missingness_drop_rate'] = args.simulate_missingness_drop_rate
     args.params['seed'] = args.seed
 
+    ########## Parameters
     ### Basic Tricks
     args.params['hyperparameters']["optimization.lr_decay"] = args.lr_decay
     args.params['hyperparameters']["optimization.warmup_steps"] = args.warmup_steps
@@ -1457,7 +1458,8 @@ if __name__ == "__main__":
                 args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
     if args.modality_drop_rate > 0.:
         args.params['hyperparameters'][f'data.modality_drop_ratio'] = args.modality_drop_rate
-    
+    ##########
+
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
 
