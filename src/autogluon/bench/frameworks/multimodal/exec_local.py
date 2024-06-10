@@ -893,13 +893,14 @@ if __name__ == "__main__":
     ### Handling Missingness
     if args.use_miss_token_embed:
         for model_name in args.params['hyperparameters']['model.names']:
-            if args.use_miss_token_embed_image:
-                if "image" in model_name:
-                    args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
-            elif args.use_miss_token_embed_numerical:
-                if "ft_transformer" in model_name:
-                    args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
-                args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
+            if args.use_miss_token_embed_image or args.use_miss_token_embed_text or args.use_miss_token_embed_numerical:
+                if args.use_miss_token_embed_image:
+                    if "image" in model_name:
+                        args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+                if args.use_miss_token_embed_numerical:
+                    if "ft_transformer" in model_name:
+                        args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
+                    args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
             else:
                 args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
                 args.params['hyperparameters']["data.numerical.use_miss_embed"] = True
