@@ -129,6 +129,12 @@ def get_args():
         "--LeMDA", action='store_true', default=False, help="Feature Aug(Joint)."
     )
 
+    ### Handling Missingness
+    parser.add_argument(
+        "--use_miss_token_embed",action='store_true', default=False,
+    )
+
+
     
 
     args = parser.parse_args()
@@ -435,6 +441,11 @@ if __name__ == "__main__":
         args.params['hyperparameters'][f'optimization.aug_learning_rate'] = 1.0e-4
         args.params['hyperparameters'][f'optimization.aug_optim_type'] = "adam"
         args.params['hyperparameters'][f'optimization.aug_weight_decay'] = 1.0e-5
+    
+    ### Handling Missingness
+    if args.use_miss_token_embed:
+        for model_name in args.params['hyperparameters']['model.names']:
+            args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
     
     if args.benchmark_dir == "debug":
         os.system(f"rm -rf  {args.benchmark_dir}")
