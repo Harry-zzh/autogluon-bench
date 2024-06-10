@@ -811,6 +811,7 @@ if __name__ == "__main__":
         if args.fusion_transformer_concat_all_tokens:
             args.params['hyperparameters']['model.hf_text.pooling_mode'] = "all"
             args.params['hyperparameters']['model.ft_transformer.pooling_mode'] = "all"
+            args.params['hyperparameters']['model.timm_image.pooling_mode'] = "all"
         use_default_fusion = False
         if args.use_llama_7B:
             args.params['hyperparameters']['model.fusion_transformer.use_llama_7B'] = True
