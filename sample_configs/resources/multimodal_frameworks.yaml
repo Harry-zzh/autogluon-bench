@@ -1,20 +1,3 @@
-# AutoGluon_stable:
-#   repo: https://github.com/autogluon/autogluon.git
-#   version: master
-  # params:  # MultimodalPredictor.fit(params)
-  #   # time_limit:  10
-  #   seed: 0
-  #   hyperparameters:
-  #     env.num_gpus: 1
-  #     # 
-  #     # optimization.max_epochs: 30
-  #     # optimization.max_epochs: 10
-  #     # optimization.loss_function: "balanced_bce"
-  #     optimization.max_epochs: 16
-  #     optimization.loss_function: "mask2former_loss"
-  #     env.precision: 32
-  #     model.sam.num_mask_tokens: 10
-
 AutoGluon_stable:
   repo: https://github.com/autogluon/autogluon.git
   version: master
@@ -23,26 +6,3 @@ AutoGluon_stable:
     hyperparameters:
       optimization.max_epochs: 10
       
-# default: optimization.max_epochs: 30
-# leaf: CUDA_VISIBLE_DEVICES=0 agbench run sample_configs/multimodal_local_configs_mine.yaml
-# road: CUDA_VISIBLE_DEVICES=1 agbench run sample_configs/multimodal_local_configs_mine.yaml
-# polyp: CUDA_VISIBLE_DEVICES=2 agbench run sample_configs/multimodal_local_configs_mine.yaml
-# isic2017: CUDA_VISIBLE_DEVICES=3 agbench run sample_configs/multimodal_local_configs_mine.yaml
-
-# SBU-shadow: CUDA_VISIBLE_DEVICES=4 agbench run sample_configs/multimodal_local_configs_mine.yaml
-# "optimization.max_epochs":10, "optimization.loss_function": "balanced_bce"
-
-# camo_sem_seg: CUDA_VISIBLE_DEVICES=5 agbench run sample_configs/multimodal_local_configs_mine.yaml
-# optimization.max_epochs: 20
-
-# Trans10K_cls12: CUDA_VISIBLE_DEVICES=6 agbench run sample_configs/multimodal_local_configs_mine.yaml
-# optimization.max_epochs: 16 optimization.loss_function: "mask2former_loss" env.precision: 32 model.sam.num_mask_tokens: 10
-
-AutoGluon_stable_peft:
-  repo: https://github.com/autogluon/autogluon.git
-  version: master
-  params:  # MultimodalPredictor.fit(params)
-    presets: best_quality
-    hyperparameters:
-      optimization.max_epochs: 10
-      optimization.efficient_finetune: "lora"
