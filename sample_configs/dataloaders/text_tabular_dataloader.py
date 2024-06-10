@@ -36,10 +36,10 @@ class TextTabularDataLoader:
         self.label_columns = self.dataset_config["label_columns"]
         self.ignore_columns = self.dataset_config["ignore_columns"]
 
-        # url = self.dataset_config["url"].format(name=self.name)
-        # base_dir = get_data_home_dir()
-        # load_zip.unzip(url, unzip_dir=base_dir)
-        # self.dataset_dir = os.path.join(base_dir, self.name)
+        url = self.dataset_config["url"].format(name=self.name)
+        base_dir = get_data_home_dir()
+        load_zip.unzip(url, unzip_dir=base_dir)
+        self.dataset_dir = os.path.join(base_dir, self.name)
 
         url = self.dataset_config["url"].format(split=self.split)
         file_extention = os.path.splitext(url)[-1]
