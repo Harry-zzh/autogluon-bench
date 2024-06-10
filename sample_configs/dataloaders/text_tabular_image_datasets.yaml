@@ -98,6 +98,7 @@ fakeddit:
 
 CCD:
   <<: *base
+  url: s3://automl-mm-bench/CCD_processed.zip
   feature_columns:
     - timing
     - weather
@@ -111,6 +112,7 @@ CCD:
 
 skin_cancer:
   <<: *base
+  url: s3://automl-mm-bench/skin_cancer_processed.zip
   feature_columns:
     - image_id
     - dx_type
@@ -124,6 +126,7 @@ skin_cancer:
 
 wikiart:
   <<: *base
+  url: s3://automl-mm-bench/wikiart_processed.zip
   feature_columns:
     - file
     - genre
@@ -135,6 +138,7 @@ wikiart:
 
 CD18:
   <<: *base
+  url: s3://automl-mm-bench/CD18_processed.zip
   feature_columns:
     - name
     - Model
@@ -164,6 +168,7 @@ CD18:
 
 DVM-CAR:
   <<: *base
+  url: s3://automl-mm-bench/DVM-CAR_processed.zip
   feature_columns:
     - Maker
     - Genmodel
@@ -224,6 +229,7 @@ petfinder:
 
 covid-chestxray-dataset:
   <<: *base
+  url: s3://automl-mm-bench/covid-chestxray-dataset_processed.zip
   feature_columns:
     - offset
     - sex
@@ -252,6 +258,7 @@ covid-chestxray-dataset:
 
 art-price-dataset:
   <<: *base
+  url: s3://automl-mm-bench/art-price-dataset_processed.zip
   feature_columns:
     - images
     - price
@@ -306,6 +313,7 @@ seattle_airbnb:
 
 goodreads:
   <<: *base
+  url: s3://automl-mm-bench/goodreads_processed.zip
   feature_columns:
     - bookformat
     - desc
@@ -323,6 +331,7 @@ goodreads:
 
 KARD:
   <<: *base
+  url: s3://automl-mm-bench/KARD_processed.zip
   feature_columns:
     - name
     - studio
