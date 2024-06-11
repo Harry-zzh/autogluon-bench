@@ -1,270 +1,485 @@
-<div align="left">
-  <img src="https://user-images.githubusercontent.com/16392542/77208906-224aa500-6aba-11ea-96bd-e81806074030.png" width="350">
-</div>
+This folder contains the instructions for reproducing the result from the paper **Bag of Tricks for Multimodal AutoML with Image, Text, and Tabular Data.**
 
-# AutoGluon-Bench
+# Installation
 
-Welcome to AutoGluon-Bench, a suite for benchmarking your AutoML frameworks.
+```shell
+conda create -n ag python=3.10
+conda activate ag
+conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install fastapi==0.110
+pip install peft
+pip install bitsandbytes
+pip install mkl==2024.0
 
-## Setup
-
-Follow the steps below to set up autogluon-bench:
-
-```bash
-# create virtual env and update pip
-python3 -m venv .venv_agbench
-source .venv_agbench/bin/activate
-python3 -m pip install --upgrade pip
-```
-
-Install `autogloun-bench` from PyPI:
-
-```bash
+# install autogluon-bench
 python3 -m pip install autogluon.bench
+
+# install autogluon
+cd src/autogluon/bench/frameworks/multimodal/autogluon_local
+bash ./full_install.sh
 ```
 
-Install `autogluon-bench` from source for development:
+# 2. Datasets Preparation
+The urls of our processed datasets are in sample_configs/dataloaders/all_datasets.yaml. Our code already provides the code to prepare the datasets when running the benchmark, so you don't need to download the datasets manually.
 
-```bash
-git clone https://github.com/autogluon/autogluon-bench.git
-cd autogluon-bench
+Here are the names of datasets:
+- Text+Tabular datasets: ["fake", "qaa", "qaq", "airbnb","channel", "cloth"]
+- Image+Text datasets: ["ptech", "memotion", "food101", "aep","fakeddit"]
+- Image+Tabular datasets: ["ccd", "HAM", "wikiart", "cd18","DVM"]
+- Image+Text+Tabular datasets: ["petfinder", "covid", "artm", "seattle", "goodreads", "KARD"]
 
-# install from source in editable mode
-pip install -e ".[tests]"
+# 3. Run the Benchmark
+```shell
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py --<flag> <value>
+```
+- `params` is a yaml file that records the basic settings for running autogluon-bench, we use autogluon-bench repository to run our benchmark.
+- `seed` determines the random seed. Options are `0,1,2`.
+- `benchmark_dir` determines the path of output directory.
+- `metrics_dir` determines the path of evaluation results.
+- `dataset_name` refers to the dataset name. Options are listed in **2. Datasets Preparation**.
+
+The detailed commands of running the experiments in our paper are as follows.
+
+## Basic Tricks
+
+Flags explanations:
+- `top_k_average_method` determines the way of averaging the weights of multiple fine-tuned models. Options are `best, greedy_soup`. `best` means choosing the best checkpoint weight, while `greedy_soup` means using greedy soup.
+- `gradient_clip_val` Options are `None, 1.`.`None` means not using gradient clipping, while `1.` means cliping the gradients with a norm threshold of 1.0.
+- `warmup_steps` Options are `0., 0.1`. `0` means not using learning rate warmup, while `0.1` means linearly increases the learning rate from 0 to the peak learning rate during the first 10% of training steps.
+- `lr_decay` Options are `1., 0.9`. `1.` means not using layerwise learning rate decay, while `0.9` means using a decay rate of 0.9.
+
+```shell
+# Baseline
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method best \
+--gradient_clip_val None \
+--warmup_steps 0. \
+--lr_decay 1.
+
+# +Greedy Soup
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val None \
+--warmup_steps 0. \
+--lr_decay 1.
+
+# +Gradient Clip
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0. \
+--lr_decay 1.
+
+# +LR Warmup
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 1.
+
+# +Layerwise Decay (Baseline+)
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9
 ```
 
+## Multimodal Fusion Strategies
 
-## Run benchmarks locally
+Flags explanations:
+- `use_fusion_transformer` determines whether using a transformer-based fusion module (LF-Transformer). 
+- `clip_fusion_mlp` determines whether using CLIP’s image and text encoders. `clip_high_quality` means using CLIP ViT-L/14 variant (LF-Aligned).
+- `use_llama_7B` determines whether using the 7B version of Llama2 as fusion module (LF-LLM).
+- `sequential_fusion` determines whether using sequential fusion (LF-SF).
+- `early_fusion` determines whether using early fusion.
 
-To run the benchmarks on your local machine, use the following command:
+```shell
+# LF-Transformer
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_fusion_transformer 
 
-```
-agbench run path/to/local_config_file
-```
+# LF-Aigned
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--clip_fusion_mlp \
+--clip_high_quality
 
-Check out our [sample local configuration files](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs) for local runs.
+# LF-LLM
+## Follow the instructions in https://huggingface.co/meta-llama/Llama-2-7b-hf to get access to this model, then pass your own token for downloading the model to "--llama7B_token".
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_fusion_transformer \
+--fusion_transformer_concat_all_tokens \
+--use_llama_7B \
+--llama7B_token {token}
 
-The results are stored in the following directory: `{WORKING_DIR}/{root_dir}/{module}/{benchmark_name}_{timestamp}`.
+# LF-SF
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs_text_tabular.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--sequential_fusion
 
-
-### Tabular and Timeseries Benchmark
-
-To perform tabular or timeseries benchmarking, set the module to 'tabular' or 'timeseries'. You must set both Benchmark Configurations and Tabular/Timeseries Specific configurations, and each should have a single value. Refer to the [sample configuration file](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs/tabluar_local_configs.yaml) for more details.
-
-The tabular/timeseires module leverages the [AMLB](https://github.com/openml/automlbenchmark) benchmarking framework. Required and optional AMLB arguments are specified via the configuration file mentioned previously.
-
-Custom configuration is supported by providing a local directory to `amlb_user_dir` in the config, by which custom frameworks, constraints and datasets can be overriden. We have a minimum working [custom config](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs/amlb_configs) setup for benchmarking on a custom framework (a `AutoGluon` dev branch). In the [sample configuration file](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs/tabluar_local_configs.yaml), change the following field to:
-
-```
-framework: AutoGluon_dev:example
-amlb_user_dir: path_to/sample_configs/amlb_configs 
-```
-
-For more customizations, please follow the [example custom configuration folder](https://github.com/openml/automlbenchmark/tree/master/examples/custom) provided by AMLB and their [documentation](https://github.com/openml/automlbenchmark/blob/master/docs/HOWTO.md#custom-configuration). 
-
-
-### Multimodal Benchmark
-
-For multimodal benchmarking, set the module to multimodal. Note that multimodal benchmarking directly calls the MultiModalPredictor, bypassing the extra layer of [AMLB](https://github.com/openml/automlbenchmark). Therefore, the required arguments are different from those for tabular or timeseries. Please refer to the [sample multimodal local run configuration file](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs/tabluar_local_configs.yaml). 
-
-We also support customizations on benchmarking framework, datasets, and metrics by providing `custom_resource_dir`, `custom_dataloader`, `custom_metrics`.
-
-To define custom frameworks, you can follow the [examples](https://github.com/autogluon/autogluon-bench/tree/master/sample_configs/resources/multimodal_frameworks.yaml).
-1. Create a folder under working directory, e.g. `custom_resources/`
-2. Create a yaml file named `multimodal_frameworks.yaml`
-3. Add an entry to the file with `repo` as the GitHub URL, `version` as the branch or tag name, `params` to be used by `MultiModalPredictor`. 
-4. Add `custom_resource_dir: custom/resources/` in the run configuration file.
-
-To add more datasets to your benchmarking jobs. We support custom datasets with custom defined data loaders. Follow these steps:
-  1. Create a folder under the working directory, e.g. `custom_dataloader/`
-  2. Create a dataset yaml file, `custom_dataloader/datasets.yaml` which includes all required properties for your problem type, please refer to the [function](https://github.com/autogluon/autogluon-bench/blob/52eee491018f6281236416f4b1bece14b88610e8/src/autogluon/bench/frameworks/multimodal/exec.py#L100-L201).
-  3. Create a dataset loader class, `custom_dataloader/dataloader.py`, which downloads and loads the dataset as a dataframe. Please set the required properties as mentioned above.
-  4. Add `custom_dataloader` in the `agbench run` configuration, where `dataloader_file`, `class_name` and `dataset_config_file` are required. 
-  5. Make sure you have the proper permission to download the dataset. If running in `AWS mode`, we support downloading from the S3 bucket specified as `DATA_BUCKET` in the `agbench run` configuration under the same AWS Batch deployment account.
-
-  Please refer to [here](https://github.com/autogluon/autogluon-bench/tree/master/sample_configs/dataloaders) for more examples.
-
-Adding custom metrics is similar as adding data loaders. Internally, we convert the custom metrics into an [AutoGluon Scorer](https://auto.gluon.ai/stable/tutorials/tabular/advanced/tabular-custom-metric.html) using the `autogluon.core.metrics.make_scorer` function. Follow these steps to set up:
-  1. Create a folder under the working directory, e.g. `custom_metrics/`
-  2. Create a metrics script, `custom_metrics/metrics.py` which has a function defined that returns a metrics score.
-  4. Add `custom_metrics` in the `agbench run` configuration, where `metrics_path`, `function_name` are required. Aditional arguments can be added for the [make_scorer](https://github.com/autogluon/autogluon/blob/a33cc0e084c82cb207c6b98b13b49c1a377f3f0d/core/src/autogluon/core/metrics/__init__.py#L333-L335) function.
-
-  Please refer to [here](https://github.com/autogluon/autogluon-bench/tree/master/sample_configs/custom_metrics) for more examples.
-
-
-## Run benchmarks on AWS
-
-AutoGluon-Bench uses the AWS CDK to build an AWS Batch compute environment for benchmarking.
-
-To get started, install [Node.js](https://nodejs.org/) and [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install) with the following instructions:
-
-1. Install [Node Version Manager](https://github.com/nvm-sh/nvm#installing-and-updating).
-2. Source profile or restart the terminal.
-3. Follow the `Prerequisites` section on the [AWS CDK Guide](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) and install an appropriate `Node.js` version for your system:
-```bash
-nvm install $VERSION  # install Node.js
-npm install -g aws-cdk  # install aws-cdk
-cdk --version  # verify the installation, you might need to update the Node.js version depending on the log.
-```
-4. Follow the [AWS CLI Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) to install `awscliv2`. 
-
-If it is the first time using CDK to deploy to an AWS environment (An AWS environment is a combination of an AWS account and Region), please run the following:
-
-```bash
-cdk bootstrap aws://CDK_DEPLOY_ACCOUNT/CDK_DEPLOY_REGION
-```
-
-You will need a cloud configuration file to run the benchmarks. You can edit the provided [sample cloud config files](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs), or use the CLI tool to generate the cloud config files locally.
-
-For multimodal:
-
-```
-agbench generate-cloud-config --module multimodal --cdk-deploy-account <AWS_ACCOUNT_ID> --cdk-deploy-region <AWS_ACCOUNT_REGION> --prefix <PREFIX> --metrics-bucket <METRICS_BUCKET> --data-bucket <DATA_BUCKET> --dataset-names DATASET_1,DATASET_2 --custom-resource-dir <CUSTOM_RESOURCE_DIR> --custom-dataloader "dataloader_file:value1;class_name:value2;dataset_config_file:value3"
+# Early-fusion
+## Follow the instructions in https://github.com/invictus717/MetaTransformer to download the pre-trained checkpoint of Meta-Transformer-L14, then pass the model path to "--meta_transformer_ckpt_path"
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--early_fusion \
+--meta_transformer_ckpt_path {meta_transformer_ckpt_path}
 ```
 
-For tabular or timeseries:
-```
-agbench generate-cloud-config --module <MODULE> --cdk-deploy-account <AWS_ACCOUNT_ID> --cdk-deploy-region <AWS_ACCOUNT_REGION> --prefix <PREFIX> --metrics-bucket <METRICS_BUCKET> --git-uri-branch <AMLB_GIT_URI_BRANCH> --framework <AMLB_FRAMEWORK> --amlb-benchmark <BENCHMARK1>,<BENCHMARK2> --amlb-task "BENCHMARK1:DATASET1,DATASET2;BENCHMARK2:DATASET3" --amlb-constraint <CONSTRAINT> --amlb-fold-to-run "BENCHMARK1:DATASET1:fold1/fold2,DATASET2:fold1/fold2;BENCHMARK1:DATASET3:fold1/fold2" --amlb-user-dir <AMLB_USER_DIR>
-```
+## Converting Tabular Data into Text
 
-For more details, you can run
-```
-agbench generate-cloud-config --help
-```
+- `categorical_convert_to_text` determines whether converting categorical data into text. `categorical_convert_to_text_template` determines the used templates when converting, options are `direct, text, list, latex`. Default is `latex`.
+- `numerical_convert_to_text` determines whether converting numerical data into text. 
 
-After having the configuration file ready, use the command below to initiate benchmark runs on cloud:
+```shell
+# Convert Categorical
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--categorical_convert_to_text \
+--categorical_convert_to_text_template latex
 
-```
-agbench run /path/to/cloud_config_file
-```
-
-This command automatically sets up an AWS Batch environment using instance specifications defined in the [cloud config files](https://github.com/autogluon/autogluon-bench/tree/master/sample_configs). It also creates a lambda function named with your chosen `LAMBDA_FUNCTION_NAME`. This lambda function is automatically invoked with the cloud config file you provided, submitting a single AWS Batch job or a parent job for [Array jobs](https://docs.aws.amazon.com/batch/latest/userguide/array_jobs.html) to the job queue (named with the `PREFIX` you provided).
-
-In order for the Lambda function to submit multiple Array child jobs simultaneously, you need to specify a list of values for each module-specific key. Each combination of configurations is saved and uploaded to your specified `METRICS_BUCKET` in S3, stored under `S3://{METRICS_BUCKET}/configs/{module}/{BENCHMARK_NAME}_{timestamp}/{BENCHMARK_NAME}_split_{UID}.yaml`. Here, `UID` is a unique ID assigned to the split.
-
-The AWS infrastructure configurations and submitted job ID is saved locally at `{WORKING_DIR}/{root_dir}/{module}/{benchmark_name}_{timestamp}/aws_configs.yaml`. You can use this file to check the job status at any time:
-
-```bash
-agbench get-job-status --config-file /path/to/aws_configs.yaml
-```
-
-You can also check the job status using job IDs:
-
-```bash
-agbench get-job-status --job-ids JOB_ID_1 --job-ids JOB_ID_2 —cdk_deploy_region AWS_REGION
-
-```
-
-Job logs can be viewed on the AWS console. Each job has an `UID` attached to the name, which you can use to identify the respective config split. After the jobs are completed and reach the `SUCCEEDED` status in the job queue, you'll find metrics saved under `S3://{METRICS_BUCKET}/{module}/{benchmark_name}_{timestamp}/{benchmark_name}_{timestamp}_{UID}`.
-
-A cloud configuration file with time-stamped `benchmark_name` is also saved under `{WORKING_DIR}/{root_dir}/{module}/{benchmark_name}_{timestamp}/{module}_cloud_configs.yaml`
-
-By default, the infrastructure created is retained for future use. To automatically remove resources after the run, use the `--remove_resources` option:
-
-```bash
-agbench run path/to/cloud_config_file --remove-resources
+# Convert Numerical
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--numerical_convert_to_text 
 ```
 
-This will check the job status every 2 minutes and remove resources after all jobs succeed. If any job fails, resources will be kept.
+## Cross-modal Alignment
 
-If you want to manually remove resources later, use:
+- `alignment_loss` determines the type of the extra loss used for cross-modal alignment. Options are `positive-only, positive_negative, all`. 
 
-```bash
-agbench destroy-stack --config-file `{WORKING_DIR}/{root_dir}/{module}/{benchmark_name}_{timestamp}/aws_configs.yaml`
+```shell
+# Positive only
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--alignment_loss positive-only
+
+# Positive+Negative
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--alignment_loss positive_negative
 ```
 
-Or you can remove specific stacks by running:
+## Multimodal Data Augmentation
 
-```bash
-agbench destroy-stack --static-resource-stack STATIC_RESOURCE_STACK_NAME --batch-stack BATCH_STACK_NAME --cdk-deploy-account CDK_DEPLOY_ACCOUNT --cdk-deploy-region CDK_DEPLOY_REGION
-```
-where you can find all argument values in `{WORKING_DIR}/{root_dir}/{module}/{benchmark_name}_{timestamp}/aws_configs.yaml`.
+- `text_trivial_aug_maxscale` determines the scale of text input augmentation. Default is 0.1.
+- `use_image_aug` determines whether using image input augmentation.
+- `manifold_mixup` determines whether using manifold method (Feature Aug.(Inde.)).
+- `LeMDA` determines whether using LeMDA method (Feature Aug.(Joint)).
 
+```shell
+# Input Aug.
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--text_trivial_aug_maxscale 0.1 \
+--use_image_aug
 
-### Configure the AWS infrastructure
+# Feature Aug.(Inde.), use manifold mixup method
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--manifold_mixup
 
-The default infrastructure configurations are located [here](https://github.com/autogluon/autogluon-bench/blob/master/src/autogluon/bench/cloud/aws/default_config.yaml).
-CDK_DEPLOY_ACCOUNT: dummy
-CDK_DEPLOY_REGION: dummy
-PREFIX: ag-bench
-MAX_MACHINE_NUM: 20
-BLOCK_DEVICE_VOLUME: 100
-TIME_LIMIT: 3600
-RESERVED_MEMORY_SIZE: 15000
-INSTANCE: g4dn.2xlarge
-LAMBDA_FUNCTION_NAME: ag-bench-job
-
-where:
-- `CDK_DEPLOY_ACCOUNT` and `CDK_DEPLOY_REGION` should be overridden with your AWS account ID and desired region to create the stack.
-- `PREFIX` is used as an identifier for the stack and resources created.
-- `MAX_MACHINE_NUM` is the maximum number of EC2 instances can be started for AWS Batch.
-- `BLOCK_DEVICE_VOLUME` is the size of storage device attached to instance.
-- `TIME_LIMIT` is the timeout of AWS Batch job, i.e. the maximum time the instance will run. There is a buffer of 3600s added on top of it to account for instance startup time and dataset download time.
-- `RESERVED_MEMORY_SIZE` is used together with the instance memory size to calculate the container shm_size.
-- `INSTANCE` is the EC2 instance type.
-- `LAMBDA_FUNCTION_NAME` is the lambda function prefix to submit jobs to AWS Batch.
-
-To override these configurations, use the `cdk_context` key in your custom config file. See our [sample cloud config](https://github.com/autogluon/autogluon-bench/blob/master/sample_configs/tabular_cloud_configs.yaml) for reference.
-
-For `multimodal` module, these will also be overridden by a `constraint` defined [here](https://github.com/autogluon/autogluon-bench/tree/master/src/autogluon/bench/resources/multimodal_constraints.yaml) or a custom constraint specified in `multimodal_constraints.yaml` under `custom_resource_dir`. See [sample custom constraints file](https://github.com/autogluon/autogluon-bench/tree/master/sample_configs/resources/multimodal_constraints.yaml)
-
-### Monitoring metrics for your instances on AWS
-
-A variety of metrics are available for the EC2 instances that are launched during benchmarking. These can be accessed through the AWS Console by following this navigation path: `CloudWatch` -> `All metrics` -> `AWS namespaces` -> `EC2`. For a comprehensive list of these metrics, refer to the [official AWS documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/viewing_metrics_with_cloudwatch.html).
-
-In addition to the standard metrics, we also provide a custom metric for `GPUUtilization`. This can be found in the `CloudWatch` section under `All metrics` -> `Custom namespaces` -> `EC2`. Please note that the `GPUUtilization` metric is also updated every five minutes.
-
-We provide an option to save aggregated (average) custom hardware metrics (`GPUUtilization` and `CPUUtilization` logged in 5s intervals) to the benchmark directory under the provided S3 bucket, simply use the option when running benchmark:
-
-```
-agbench run --save-hardware-metrics
-```
-
-Note that currently this command waits for all jobs to become successful to pull the hardware metrics.
-
-## Evaluating benchmark runs
-
-Benchmark results can be evaluated using the tools in `src/autogluon/bench/eval/`. The evaluation logic will aggregate, clean, and produce evaluation results for runs stored in S3.
-In a future release, we intend to add evaluation support for multimodal benchmark results.
-
-
-### Evaluation Steps
-
-Begin by setting up AWS credentials for the default profile for the AWS account that has the benchmark results in S3.
-
-Step 1: Aggregate AMLB results on S3. After running the benchmark in [AWS mode](#run-benchmarks-on-aws), take note of the `benchmark_name` with timestamp in `{WORKING_DIR}/{root_dir}/{module}/{benchmark_name}_{timestamp}/{module}_cloud_configs.yaml` and run the command below:
-```
-agbench aggregate-amlb-results {METRICS_BUCKET} {module} {benchmark_name} --constraint {constraint}
+# Feature Aug.(Joint), use LeMDA method
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--LeMDA 
 ```
 
-This will create a new file on S3 with this signature:
-```
-s3://{METRICS_BUCKET}/aggregated/{module}/{benchmark_name}/results_automlbenchmark_{constraint}_{benchmark_name}.csv
+## Handling Modality Missingness
+
+- `modality_drop_rate` determines the modality dropout rate. Default is 0.3 (Modality Dropout).
+- `use_miss_token_embed_numerical` determines whether using learnable embedding for missing numerical data (LearnableEmbed(Numeric)).
+- `use_miss_token_embed_image` determines whether using learnable embedding for missing image data (LearnableEmbed(Image)).
+- `simulate_missingness` determines whether simulating various scenarios with different ratios of missing modalities in the training and test sets. `simulate_missingness_drop_rate` is the missing ratio of training set, options are `0.1, 0.3, 0.5`. These two parameters are used only when using the previous tricks of handling modality missingness.
+
+```shell
+# Modality Dropout
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--modality_drop_rate 0.3
+
+# Learnable Embed(Numeric)
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_miss_token_embed \
+--use_miss_token_embed_numerical
+
+# Learnable Embed(Image)
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_miss_token_embed \
+--use_miss_token_embed_image
+
+# Modality Drop.+Learn. Embed(Image)
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--modality_drop_rate 0.3 \
+--use_miss_token_embed \
+--use_miss_token_embed_image
 ```
 
-Currently, aggregation is also supported for multimodal benchmark results without the `--constratint` option.
+## Integrating Bag of Tricks
+```shell
+# Stacking
+## For Text+Tabular Datasets
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_fusion_transformer \
+--categorical_convert_to_text \
+--categorical_convert_to_text_template latex \
+--LeMDA \
+--modality_drop_rate 0.3 
 
-For more details, run:
-```
-agbench aggregate-amlb-results --help
-```
+## For Image+Text Datasets
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--clip_fusion_mlp \
+--clip_high_quality \
+--alignment_loss all \
+--text_trivial_aug_maxscale 0.1 \
+--use_image_aug \
+--manifold_mixup \
+--LeMDA \
+--modality_drop_rate 0.3 
 
-Step 2: Further clean the aggregated results.
+## For Image+Tabular Datasets
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--clip_fusion_mlp \
+--clip_high_quality \
+--alignment_loss positive-only \
+--categorical_convert_to_text \
+--categorical_convert_to_text_template latex \
+--text_trivial_aug_maxscale 0.1 \
+--use_image_aug \
+--use_miss_token_embed \
+--use_miss_token_embed_image
 
-If the file is still on S3 from the previous step, run:
-```
-agbench clean-amlb-results {benchmark_name} --results-dir-input s3://{METRICS_BUCKET}/aggregated/{module}/{benchmark_name}/ --benchmark-name-in-input-path --constraints constratint_1 --constraints constratint_2 --results-dir-output {results_dir_output} 
---out-path-prefix {out_path_prefix} --out-path-suffix {out_path_suffix}
-```
-where `{results_dir_input}` can also be a local directory. This will create a local file `{results_dir_output}/{out_path_prefix}{benchmark_name}{out_path_suffix}`.
+## For Image+Text+Tabular Datasets
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--clip_fusion_mlp \
+--clip_high_quality \
+--alignment_loss positive-only \
+--text_trivial_aug_maxscale 0.1 \
+--use_image_aug \
+--modality_drop_rate 0.3 \
+--use_miss_token_embed \
+--use_miss_token_embed_image
 
-For more details, run:
-```
-agbench clean-amlb-results --help
-```
+# Average All
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_ensemble \
+--avg_all \
+--model_paths {1.ckpt 2.ckpt...}
 
-Step 3: Run evaluation on multiple cleaned files from `Step 2`
-
-```
-agbench evaluate-amlb-results --frameworks-run framework_1 --frameworks-run framework_2 --results-dir-input data/results/input/prepared/openml/ --paths file_name_1.csv --paths file_name_2.csv --output-suffix benchmark_name --no-clean-data
+# Ensemble Selection
+CUDA_VISIBLE_DEVICES=0 python src/autogluon/bench/frameworks/multimodal/exec_local.py \
+--params sample_configs/multimodal_local_configs.yaml \
+--seed 0 \
+--benchmark_dir {output_dir} \
+--metrics_dir {output_dir}/results \
+--dataset_name {dataset_name} \
+--top_k_average_method greedy_soup \
+--gradient_clip_val 1. \
+--warmup_steps 0.1 \
+--lr_decay 0.9 \
+--use_ensemble \
+--model_paths {1.ckpt 2.ckpt...}
 ```
