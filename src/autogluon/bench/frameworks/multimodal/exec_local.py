@@ -49,10 +49,8 @@ def get_type_missing_ratios(missing_ratios, column_types):
 
 def drop_modalities(df, a, column_types, seed=0):
     np.random.seed(seed)
-    # 检查输入参数
-    assert 0 <= a <= 1, "丢失比例a应该在0到1之间"
-    
-    # 获取不同模态的列名
+    assert 0 <= a <= 1
+
     image_columns = [col for col in df.columns if col in column_types and 'image' in column_types[col]]
     text_columns = [col for col in df.columns if col in column_types and 'text' in column_types[col]]
     categorical_columns = [col for col in df.columns if col in column_types and 'categorical' in column_types[col]]
@@ -61,7 +59,6 @@ def drop_modalities(df, a, column_types, seed=0):
     # Tabular columns
     tabular_columns = categorical_columns + numerical_columns
     
-    # 定义一个函数来计算丢失的索引
     def get_missing_indices(columns, proportion):
         total_elements = len(df) * len(columns)
         n_missing = int(total_elements * proportion)
@@ -69,20 +66,16 @@ def drop_modalities(df, a, column_types, seed=0):
         row_indices = missing_indices // len(columns)
         col_indices = missing_indices % len(columns)
         return list(zip(row_indices, col_indices))
-    
-    # 丢失image模态的值
+
     for row_idx, col_idx in get_missing_indices(image_columns, a):
         df.loc[row_idx, image_columns[col_idx]] = np.nan
-        
-    # 丢失text模态的值
+    
     for row_idx, col_idx in get_missing_indices(text_columns, a):
         df.loc[row_idx, text_columns[col_idx]] = np.nan
         
-    # 丢失tabular模态的值
     for row_idx, col_idx in get_missing_indices(tabular_columns, a):
         df.loc[row_idx, tabular_columns[col_idx]] = np.nan
     
-    # 确保没有一行中所有模态都被丢失
     for index, row in df.iterrows():
         if row[image_columns].isnull().all() and row[text_columns].isnull().all() and row[tabular_columns].isnull().all():
             if len(image_columns) == 0:
@@ -179,7 +172,13 @@ def get_args():
         "--use_llama_7B", action='store_true', default=False, help="Use LLM(LLAMA-7B) as the fusion module."
     )
     parser.add_argument(
+        "--llama_7B_token", type=str, default=None, help="The token for downloading Llama2-7B model."
+    )
+    parser.add_argument(
         "--early_fusion", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--meta_transformer_ckpt_path", type=str, default=None, help="The path of the pre-trained checkpoint of Meta-Transformer-L14."
     )
     parser.add_argument(
         "--sequential_fusion", action="store_true", default=False
@@ -187,13 +186,10 @@ def get_args():
     
     ### Converting Tabular Data into Text
     parser.add_argument(
-        "--categorical_convert_to_text", type=bool, default=False, help="convert categorical columns to text or not."
+        "--categorical_convert_to_text", action='store_true', default=False, help="convert categorical columns to text or not."
     )
     parser.add_argument(
-        "--categorical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
-    )
-    parser.add_argument(
-        "--categorical_convert_to_text_use_header_template",type=str, default="list"
+        "--categorical_convert_to_text_template",type=str, default="latex"
     )
     parser.add_argument(
         "--numerical_convert_to_text", action='store_true', default=False, help="convert numerical columns to text or not."
@@ -204,13 +200,10 @@ def get_args():
 
     ### Cross-modal alignment
     parser.add_argument(
-        "--alignment_loss", type=str, default=None, help="positive-only alignment loss."
+        "--alignment_loss", type=str, default=None, help="Extra loss for cross-modality alignment.", choices=["positive-only", "positive_negative", "all"]
     )
     parser.add_argument(
-        "--contrastive_loss", type=str, default=None, help="positive+negative alignment loss."
-    )
-    parser.add_argument(
-        "--contrastive_loss_w", type=float, default=1., help="The weight of positive+negative alignment loss."
+        "--alignment_loss_w", type=float, default=1., help="The weight of positive+negative alignment loss."
     )
 
     ### Data Aug
@@ -218,17 +211,21 @@ def get_args():
         "--text_trivial_aug_maxscale", type=float, default=0.0, help="Text input aug."
     )
     parser.add_argument(
-        "--not_use_image_aug", type=bool, default=True,
+        "--use_image_aug", action='store_true', default=False
     )
     parser.add_argument(
         "--LeMDA", action='store_true', default=False, help="Use Feature Aug(Joint) or not."
     )
     parser.add_argument(
-        "--LeMDA_layer", type=int, default=4,
+        "--LeMDA_layer", type=int, default=6,
     )
     parser.add_argument(
         "--manifold_mixup",  action='store_true', default=False, help="Use Feature Aug(Inde.) or not."
     )
+    parser.add_argument(
+        "--manifold_mixup_a", type=float, default=2., help= "Alpha params in manifold mixup" 
+    )
+    
 
     ### Handling Missingness
     parser.add_argument(
@@ -257,7 +254,10 @@ def get_args():
         "--use_ensemble", action='store_true', default=False, help="Ensemble Selection."
     )
     parser.add_argument(
-        "--use_avg_ensemble", action='store_true', default=False, help="Average All."
+        "--avg_all", action='store_true', default=False, help="Average All."
+    )
+    parser.add_argument(
+        "--model_paths", nargs='+', help="List of model ckpt paths for ensembling."
     )
 
     args = parser.parse_args()
@@ -427,7 +427,7 @@ def run(
 
     predictor = MultiModalPredictor(**predictor_args)
 
-    fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
+    
 
     utc_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
     if eval_model_path != None:
@@ -437,366 +437,15 @@ def run(
     use_ensemble = params.pop("use_ensemble")
     simulate_missingness = params.pop("simulate_missingness")
     if use_ensemble:
-        use_avg_ensemble = params.pop("use_avg_ensemble")
+        avg_all = params.pop("avg_all")
+        ensemble_model_paths = params.pop("model_paths")
     if simulate_missingness:
         simulate_missingness_drop_rate = params.pop("simulate_missingness_drop_rate")
 
-    if use_ensemble: # 希望在validation data上evaluate
-        zeroshot_configs = [] # 最后要选择的模型config，在我的场景里就是model ckpt name
-        
-        if dataset_name in ["fake", "qaa", "qaq", "airbnb","channel", "cloth"]:
-            prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/weight_decay_0.001/warmup_steps_0.1/lr_schedule_cosine_decay/lr_decay_0.9/"
-            all_configs_dict = {
-                # baseline+
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/": "Baseline+",
-                # lf-transformer
-                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/": "LF-Transformer",
-                # lf-aligned
-                f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/": "LF-Aligned",
-                # lf-llm
-                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/max_epochs_20/use_llama7B_fusion/": "LF-LLM",
-                # early fusion
-                f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/": "Early Fusion",
-                # lf-sequential fusion
-                f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/": "LF-SF",
-                # positive loss
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/KL_feature_align_loss/": "Positive-only",
-                # pos-neg loss
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
-                # convert-categorical 
-                f"convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/": "Convert Categorical",
-                # input aug
-                f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/": "Input Aug.",
-                # fea independent aug
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/manifold_mixup/": "Feature Aug.(Inde.)",
-                # fea joint aug
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
-                # modality drop=0.3
-                "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/": "Modality Dropout",
-                # convert numerical
-                "convert_to_text_False/ft_transformer_pretrained_False/convert_to_text_numerical/auxiliary_weight_0.0/max_epochs_20/": "Convert Numerical",
-                # miss embed
-                "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/use_miss_token_True/use_miss_token_True_numerical/": "Learnable Embed(Numerical)"
-
-            }
-            
-            all_configs = [
-                # baseline+
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/",
-                # lf-transformer
-                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/auxiliary_weight_0.0/max_epochs_20/",
-                # lf-aligned
-                f"convert_to_text_False/ft_transformer_pretrained_False/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/max_epochs_20/",
-                # lf-llm
-                f"convert_to_text_False/ft_transformer_pretrained_False/use_fusion_transformer_True/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/max_epochs_20/use_llama7B_fusion/",
-                # early fusion
-                f"convert_to_text_False/ft_transformer_pretrained_False/early_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
-                # lf-sequential fusion
-                f"convert_to_text_False/ft_transformer_pretrained_False/sequential_fusion_True/auxiliary_weight_0.0/max_epochs_20/",
-                # positive loss
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/KL_feature_align_loss/",
-                # pos-neg loss
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/contra_fea_contra_loss/contrastive_loss_w_1.0/",
-                # convert-categorical 
-                f"convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/",
-                # input aug
-                f"convert_to_text_False/ft_transformer_pretrained_False/text_trivial_aug_maxscale_0.1/auxiliary_weight_0.0/max_epochs_20/",
-                # fea independent aug
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/manifold_mixup/",
-                # fea joint aug
-                f"convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/LeMDA/lemda_layer_6/",
-                
-            ]
-            all_configs.append(
-                # modality drop=0.3
-                "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/"
-            )
-            if dataset_name in ["airbnb", "channel", "cloth"]:
-                all_configs.append(
-                    # convert numerical
-                    "convert_to_text_False/ft_transformer_pretrained_False/convert_to_text_numerical/auxiliary_weight_0.0/max_epochs_20/"
-                )
-            if dataset_name in ["fake", "airbnb", "cloth"]:
-                # all_configs.append(
-                #     # modality drop=0.3
-                #     "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/modality_drop_rate_0.3/"
-                # )
-                if dataset_name in ["airbnb"]:
-                    # miss embed
-                    all_configs.append(
-                        "convert_to_text_False/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/use_miss_token_True/use_miss_token_True_numerical/"
-                    )
-
-
-        elif dataset_name in ["persuasive_techniques",  "Memotion", "UPMC-Food101","action_effect_pred", "fakeddit"]:
-            prefix_str = f"/home/ubuntu/drive2/ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
-            all_configs_dict = {
-                # baseline+
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/": "Baseline+",
-                # lf-transformer
-                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/auxiliary_weight_0.0/": "LF-Transformer",
-                # lf-aligned
-                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/": "LF-Aligned",
-                # lf-llm
-                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/": "LF-LLM",
-                # early fusion
-                f"convert_to_text_False/no_img_aug/early_fusion_True/epoch_20/auxiliary_weight_0.0/": "Early Fusion",
-                # lf-sequential fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/": "LF-SF",
-                # positive loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/": "Positive-only",
-                # pos-neg loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
-                # convert-categorical 
-                f"convert_to_text_True/ft_transformer_pretrained_False/auxiliary_weight_0.0/max_epochs_20/categorical_template_latex/no_hf_text_insert_sep_False/": "Convert Categorical",
-                # input aug
-                f"convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/": "Input Aug.",
-                # fea independent aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/": "Feature Aug.(Inde.)",
-                # fea joint aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
-                # modality drop=0.3
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/": "Modality Dropout",
-                # miss embed
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/": "Learnable Embed(Image)",
-                # Modality Drop.+Learn. Embed(Image)
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/": "Modality Drop.+Learn. Embed(Image)"
-            }
-            all_configs = [
-                # baseline+
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/",
-                # lf-transformer
-                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/auxiliary_weight_0.0/",
-                # lf-aligned
-                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/",
-                # lf-llm
-                f"convert_to_text_False/no_img_aug/use_fusion_transformer_True/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/",
-                # early fusion
-                f"convert_to_text_False/no_img_aug/early_fusion_True/epoch_20/auxiliary_weight_0.0/",
-                # lf-sequential fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/",
-                # positive loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/",
-                # pos-neg loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/",
-                # input aug
-                f"convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/",
-                # fea independent aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/",
-                # fea joint aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/",
-                
-            ]
-            # modality dropout=0.3
-            all_configs.append(
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-            )
-            if dataset_name in ["Memotion", "fakeddit"]:
-                # # modality dropout=0.3
-                # all_configs.append(
-                #     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-                # )
-                # learnable embed
-                if dataset_name in ["fakeddit"]:
-                    all_configs.append(
-                        "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/"
-                    )
-                # modality dropout=0.3 + learnable embed
-                all_configs.append(
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/"
-                )
-        elif dataset_name in   ["CCD", "skin_cancer",  "wikiart", "CD18_convert_to_log", "DVM-CAR_convert_to_log",  ]:
-            prefix_str = f"ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
-            all_configs_dict = {
-                # baseline+
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/": "Baseline+",
-                # lf-transformer
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/auxiliary_weight_0.0/": "LF-Transformer",
-                # lf-aligned
-                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/": "LF-Aligned",
-                # lf-llm
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/": "LF-LLM",
-                # early fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/": "Early Fusion",
-                # lf-sequential fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/": "LF-SF",
-                # positive loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/": "Positive-only",
-                # pos-neg loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
-                # convert-categorical 
-                f"no_img_aug/epoch_20/auxiliary_weight_0.0/categorical_template_latex/no_hf_text_insert_sep_False/": "Convert Categorical",
-                # input aug
-                f"convert_to_text_False/epoch_20/auxiliary_weight_0.0/": "Input Aug.",
-                # fea independent aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/": "Feature Aug.(Inde.)",
-                # fea joint aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
-                # modality drop=0.3
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/": "Modality Dropout",
-                # convert numerical
-                "convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/": "Convert Numerical",
-                # miss embed
-                # "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/": "Learnable Embed(Numerical)",
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/": "Learnable Embed(Image)",
-                # miss embed image + dropout0.3
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/": "Modality Drop.+Learn. Embed(Image)"
-            }
-            all_configs = [
-                # baseline+
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/",
-                # lf-transformer
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/auxiliary_weight_0.0/",
-                # lf-aligned
-                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/",
-                # lf-llm
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/",
-                # early fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
-                # lf-sequential fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion/auxiliary_weight_0.0/",
-                # positive loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/",
-                # pos-neg loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/",
-                # convert-categorical 
-                f"no_img_aug/epoch_20/auxiliary_weight_0.0/categorical_template_latex/no_hf_text_insert_sep_False/",
-                # input aug
-                f"convert_to_text_False/epoch_20/auxiliary_weight_0.0/",
-                # fea independent aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/",
-                # fea joint aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/",
-                
-            ]
-            all_configs.append(
-                    # modality drop=0.3
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-                )
-
-            if dataset_name in ["skin_cancer", "CD18_convert_to_log"]:
-                # convert numerical
-                all_configs.append("convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/")
-            if dataset_name in ["skin_cancer", "CD18_convert_to_log", "DVM-CAR_convert_to_log"]:
-                # all_configs.append(
-                #     # modality drop=0.3
-                #     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-                # )
-
-                # miss embed
-                all_configs.append(
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/"
-                )
-
-                # miss embed(image) + modality drop 0.3
-                all_configs.append(
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/use_miss_token_True/use_miss_token_True_image/"
-                )
-
-
-                
-        else:
-            prefix_str = f"ag_bench_runs/multimodal/{dataset_name}/top_k_average_method_greedy_soup/gradient_clip_val_1.0/warmup_steps_0.1/lr_schedule_cosine_decay/weight_decay_0.001/lr_decay_0.9/"
-            all_configs_dict = {
-                # baseline+
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/": "Baseline+",
-                # lf-transformer
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/auxiliary_weight_0.0/": "LF-Transformer",
-                # lf-aligned
-                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/": "LF-Aligned",
-                # lf-llm
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/": "LF-LLM",
-                # # early fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/": "Early Fusion",
-                # lf-sequential fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion_state/auxiliary_weight_0.0/": "LF-SF",
-                # positive loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/": "Positive-only",
-                # pos-neg loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/": "Positive+Negative",
-                # convert-categorical 
-                f"no_img_aug/epoch_20/auxiliary_weight_0.0/categorical_template_latex/": "Convert Categorical",
-                # input aug
-                f"convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/": "Input Aug.",
-                # fea independent aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/": "Feature Aug.(Inde.)",
-                # fea joint aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/": "Feature Aug.(Joint)",
-                # modality drop=0.3
-                "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/": "Modality Dropout",
-                # convert numerical
-                "convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/": "Convert Numerical",
-                # miss embed
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_numerical/": "Learnable Embed(Numerical)",
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/": "Learnable Embed(Image)",
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/modality_drop_rate_0.3/": "Modality Drop.+Learn. Embed(Image)"
-            }
-            all_configs = [
-                # baseline+
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/",
-                # lf-transformer
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/auxiliary_weight_0.0/",
-                # lf-aligned
-                f"convert_to_text_False/no_img_aug/epoch_20/use_clip_fusion_mlp/clip_fusion_mlp_quality_high/auxiliary_weight_0.0/",
-                # lf-llm
-                f"convert_to_text_False/use_fusion_transformer_True/no_img_aug/epoch_20/fusion_transformer_concat_all_tokens_True/auxiliary_weight_0.0/use_llama7B_fusion/",
-                # early fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/early_fusion_True/",
-                # lf-sequential fusion
-                f"convert_to_text_False/no_img_aug/epoch_20/sequential_fusion_state/auxiliary_weight_0.0/",
-                # positive loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/KL_feature_align_loss/",
-                # pos-neg loss
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/contra_fea_contra_loss/contrastive_loss_w_1.0/",
-                # convert-categorical 
-                f"no_img_aug/epoch_20/auxiliary_weight_0.0/categorical_template_latex/",
-                # convert numerical
-                "convert_to_text_False/no_img_aug/epoch_20/convert_to_text_numerical/auxiliary_weight_0.0/",
-                # input aug
-                f"convert_to_text_False/text_trivial_aug_maxscale_0.1/epoch_20/auxiliary_weight_0.0/",
-                # fea independent aug
-                f"/home/ubuntu/drive2/{prefix_str}convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/manifold_mixup/",
-                # fea joint aug
-                f"convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/LeMDA/lemda_layer_6/",
-                
-            ]
-
-            all_configs.append(
-                    # modality drop=0.3
-                    "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-                )
-            
-            if dataset_name in ["petfinder", "covid-chestxray-dataset", "seattle_airbnb_convert_to_log", "KARD"]:
-                # all_configs.append(
-                #     # modality drop=0.3
-                #     "convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/modality_drop_rate_0.3/"
-                # )
-
-                if dataset_name in ["covid-chestxray-dataset", "seattle_airbnb_convert_to_log", ]:
-                    # miss embed
-                    all_configs.append(
-                        f"/home/ubuntu/drive2/{prefix_str}convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_numerical/"
-                    )
-                if dataset_name in ["KARD"]:
-                    # miss embed
-                    all_configs.append(
-                        f"/home/ubuntu/drive2/{prefix_str}convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/"
-                    )
-                all_configs.append(
-                        f"/home/ubuntu/drive2/{prefix_str}convert_to_text_False/no_img_aug/epoch_20/auxiliary_weight_0.0/use_miss_token_True/use_miss_token_True_image/modality_drop_rate_0.3/"
-                    )
-
-        if params["seed"] == 0:
-            seed_str = ""
-        else:
-            seed_str = f"seed_{params['seed']}/"
-        for i in range(len(all_configs)):
-            if prefix_str in all_configs[i]: 
-                all_configs[i] = all_configs[i]+ seed_str + "run1/models/model.ckpt"
-                continue
-            all_configs[i] = prefix_str+all_configs[i]+ seed_str + "run1/models/model.ckpt"
-
-
+    fit_args = {"train_data": train_data.data, "tuning_data": val_data.data, **params}
+    if use_ensemble:
+        zeroshot_configs = []
+        all_configs = ensemble_model_paths
         num_zeroshot = len(all_configs)
         problem_type = train_data.problem_type
 
@@ -843,7 +492,7 @@ def run(
 
 
             model_list = config_selected
-            pred_val = np.stack(pred_val) # y_val不用stack
+            pred_val = np.stack(pred_val)
             pred_test = np.stack(pred_test)
             val_metric = get_metric(metric=val_data.metric, problem_type=problem_type )
 
@@ -855,7 +504,7 @@ def run(
                 # **self.ensemble_method_kwargs,
             )
 
-            if test_only: # 只需要test
+            if test_only:
                 weighted_ensemble.weights_ = ensemble_weights
                 y_test_pred, y_pred_proba = weighted_ensemble.predict(pred_test)
                 if problem_type in ["binary"]:
@@ -863,15 +512,10 @@ def run(
                 err = val_metric.error(y_test, y_test_pred)
                 return err, ensemble_weights
             
-            # if problem_type in ["binary", "multiclass"]:
-            #     weighted_ensemble.fit(predictions=logits_to_prob(pred_val), labels=y_val) # 这个pred_val应该是model_list里的所有model的pred
-            # else:
             weighted_ensemble.fit(predictions=pred_val, labels=y_val)
 
             y_val_pred, y_pred_proba = weighted_ensemble.predict(pred_val)
-            # _calculate_regret方法没问题，算的结果和直接调用error一样，但是在weighted_ensemble.fit里返回的又不一样了。
-            # weighted_ensemble._calculate_regret(y_true=y_val, y_pred_proba=y_pred_proba, metric=weighted_ensemble.metric, sample_weight=None)
-            
+
             if problem_type in ["binary"]:
                 y_val_pred = list(logits_to_prob(y_val_pred)[:,1])
 
@@ -887,7 +531,7 @@ def run(
             best_score = 999999999
             for config in configs:
                 config_selected = prior_configs + [config]
-                config_score, ensemble_weights = score(predictor, config_selected) # 在这里会进行weight ensemble，一组组config遍历。得到的config_score 其实是算出来的rank
+                config_score, ensemble_weights = score(predictor, config_selected) 
                 if config_score < best_score:
                     best_score = config_score
                     best_next_config = config
@@ -895,7 +539,7 @@ def run(
             return best_next_config, best_score, best_ensemble_weights
 
         iteration = 0
-        if use_ensemble and use_avg_ensemble:
+        if use_ensemble and avg_all:
             zeroshot_configs = all_configs
             best_ensemble_weights = [1. / len(all_configs)] * len(all_configs)
             test_score, test_ensemble_weights = score(predictor, zeroshot_configs, ensemble_weights=best_ensemble_weights, test_only=True)
@@ -903,7 +547,11 @@ def run(
             print("test metric: ", 1 - test_score)
             print("best_ensemble_weights: ", best_ensemble_weights)
             return
-        while len(zeroshot_configs) < num_zeroshot: # 确定一下最终是由几个model进行ensemble
+        
+        final_selected_configs = []
+        best_eval_error = 9999999
+        final_ensemble_weights = []
+        while len(zeroshot_configs) < num_zeroshot: 
             # greedily search the config that would yield the lowest average rank if we were to evaluate it in combination
             # with previously chosen configs.
 
@@ -915,68 +563,42 @@ def run(
             iteration += 1
 
             time_start = time.time()
-            # 再研究一下选择。怎么样避免选择进更差的config。
-            best_next_config, best_train_score, best_ensemble_weights = _select_sequential(valid_configs, zeroshot_configs, prior_best_score=prior_best_score)
+
+            best_next_config, best_eval_score, best_ensemble_weights = _select_sequential(valid_configs, zeroshot_configs, prior_best_score=prior_best_score)
             time_end = time.time()
-            prior_best_score = best_train_score
+            prior_best_score = best_eval_score
 
             zeroshot_configs.append(best_next_config)
             fit_time = time_end - time_start
-            msg = f'{iteration}\t: Train: {round(best_train_score, 2)}'
+            msg = f'{iteration}\t: Eval: {round(best_eval_score, 2)}'
 
-            # test_score = config_scorer_test.score(zeroshot_configs)
             test_score, test_ensemble_weights = score(predictor, zeroshot_configs, ensemble_weights=best_ensemble_weights, test_only=True)
             print("Iteration: ", iteration)
-            print("eval error: ", best_train_score)
-            print("eval metric: ", 1 - best_train_score)
+            print("eval error: ", best_eval_score)
+            print("eval metric: ", 1 - best_eval_score)
             print("test error: ", test_score)
             print("test metric: ", 1 - test_score)
-            # 这两个
-            # print("test_ensemble_weights: ", test_ensemble_weights) # 输出的weight顺序不一定和all_configs一致。
+
             print("selected: ")
-            for c in zeroshot_configs:
-                if "seed" in c:
-                    c = c.split('seed_')[0]
-                else:
-                    c = c.split("run1/models/model.ckpt")[0]
-                c = c.split(prefix_str)[-1]
-                print(all_configs_dict[c])
-            print("best_ensemble_weights: ", best_ensemble_weights)
+            print(zeroshot_configs)
+        
+            print("ensemble_weights: ", best_ensemble_weights)
             print()
             print()
             msg += f' | {round(fit_time, 2)}s | {best_next_config}'
-            # print('here, make metadata')
-            # metadata_out = dict(
-            #     configs=copy.deepcopy(zeroshot_configs),
-            #     new_config=best_next_config,
-            #     step=iteration,
-            #     train_score=best_train_score,
-            #     test_score=test_score,
-            #     num_configs=len(zeroshot_configs),
-            #     fit_time=fit_time,
-            # )
-            # is_last = len(zeroshot_configs) >= num_zeroshot
-            # if return_all_metadata or is_last:
-            #     metadata_list.append(metadata_out)
 
-            # print(msg)
+            if best_eval_score < best_eval_error:
+                best_eval_error = best_eval_score
+                final_selected_configs = zeroshot_configs
+                final_ensemble_weights = best_ensemble_weights
+
         print("final selected: ")
-        for c in zeroshot_configs:
-            if "seed" in c:
-                c = c.split('seed_')[0]
-            else:
-                c = c.split("run1/models/model.ckpt")[0]
-            
-            c = c.split(prefix_str)[-1]
-            
-            if dataset_name == "skin_cancer" and all_configs_dict[c] == "Learnable Embed(Image)":
-                print("Learnable Embed(Numerical)")
-            else:
-                print(all_configs_dict[c])
+        print(final_selected_configs)
+    
+        print("final ensemble_weights: ", final_ensemble_weights)
+        print()
 
-
-              
-        print("best_ensemble_weights: ", best_ensemble_weights)
+        
     elif simulate_missingness: 
         predictor._learner.prepare_train_tuning_data(train_data=train_data.data, tuning_data=val_data.data, seed=params["seed"], holdout_frac=None)
         column_types = []
@@ -1051,14 +673,13 @@ def run(
                     "scores": scores,
                 }
                 subdir = f"{framework}.{dataset_name}.{constraint}.local"
-                # 不同drop rate下的test
+                # testing under different missing ratios
                 save_metrics(os.path.join(metrics_dir, subdir, f"scores_{drop_rate}"), metrics)
 
       
-
     else:
         if resume:
-            predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) # 如果不写resume = True，就会加载这个ckpt后从epoch 0开始训练。
+            predictor = predictor.load(os.path.join(benchmark_dir,"models/last.ckpt"), resume=True) 
         start_time = time.time()
         predictor.fit(**fit_args)
         end_time = time.time()
@@ -1127,7 +748,8 @@ if __name__ == "__main__":
     args.params['hyperparameters']['optimization.learning_rate'] = args.lr
     args.params['use_ensemble'] = args.use_ensemble
     if args.use_ensemble:
-        args.params['use_avg_ensemble'] = args.use_avg_ensemble
+        args.params['avg_all'] = args.avg_all
+        args.params['model_paths'] = args.model_paths 
     args.params['simulate_missingness'] = args.simulate_missingness
     if args.simulate_missingness:
         args.params['simulate_missingness_drop_rate'] = args.simulate_missingness_drop_rate
@@ -1151,6 +773,7 @@ if __name__ == "__main__":
         use_default_fusion = False
         if args.use_llama_7B:
             args.params['hyperparameters']['model.fusion_transformer.use_llama_7B'] = True
+            args.params['hyperparameters']['model.fusion_transformer.llama_7B_token'] = args.llama_7B_token
     else:
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_mlp']
     
@@ -1158,6 +781,7 @@ if __name__ == "__main__":
         args.params['hyperparameters']['model.names'] = ['ft_transformer', 'timm_image', 'hf_text', 'document_transformer', 'fusion_metatransformer']
         for model_name in args.params['hyperparameters']['model.names']:
             args.params['hyperparameters'][f'model.{model_name}.early_fusion'] = True
+            args.params['hyperparameters'][f'model.{model_name}.meta_transformer_ckpt_path'] = args.meta_transformer_ckpt_path
         use_default_fusion = False
 
     if args.sequential_fusion:
@@ -1174,14 +798,14 @@ if __name__ == "__main__":
         if args.clip_high_quality:
             args.params['hyperparameters']["model.clip_fusion_mlp.checkpoint_name"] = "openai/clip-vit-large-patch14"
         use_default_fusion = False
+
     if use_default_fusion:
         if args.auxiliary_weight != 0.1:
             args.params['hyperparameters']["model.fusion_mlp.weight"] = args.auxiliary_weight
 
     ### Converting Tabular Data into Text
     args.params['hyperparameters']["data.categorical.convert_to_text"] = args.categorical_convert_to_text
-    args.params['hyperparameters']["data.categorical.convert_to_text_use_header"] = args.categorical_convert_to_text_use_header
-    args.params['hyperparameters']["data.categorical.convert_to_text_use_header_template"] = args.categorical_convert_to_text_use_header_template
+    args.params['hyperparameters']["data.categorical.convert_to_text_template"] = args.categorical_convert_to_text_template
     if args.no_hf_text_insert_sep == False:
         args.params['hyperparameters']["model.hf_text.insert_sep"] = False
     args.params['hyperparameters']["data.numerical.convert_to_text"] = args.numerical_convert_to_text
@@ -1192,13 +816,13 @@ if __name__ == "__main__":
             args.params['hyperparameters'][f'model.fusion_transformer.alignment_loss'] = args.alignment_loss
         else:
             args.params['hyperparameters'][f'model.fusion_mlp.alignment_loss'] = args.alignment_loss
-    if args.contrastive_loss != None:
-        args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.contrastive_loss
-        args.params['hyperparameters'][f'optimization.contrastive_loss_w'] =  args.contrastive_loss_w
+        if args.alignment_loss == "positive_negative" or args.alignment_loss == "all":
+            args.params['hyperparameters'][f'optimization.contrastive_loss'] =  args.alignment_loss
+            args.params['hyperparameters'][f'optimization.contrastive_loss_w'] =  args.alignment_loss_w
     
     ### Data Aug
     args.params['hyperparameters']['model.hf_text.text_trivial_aug_maxscale'] = args.text_trivial_aug_maxscale
-    if args.not_use_image_aug == False:
+    if args.use_image_aug == False:
         args.params['hyperparameters']['model.timm_image.train_transforms'] = ['resize_shorter_side', 'center_crop']
     if args.LeMDA:
         if args.use_fusion_transformer:
@@ -1231,7 +855,7 @@ if __name__ == "__main__":
     ### Handling Missingness
     if args.use_miss_token_embed:
         for model_name in args.params['hyperparameters']['model.names']:
-            if args.use_miss_token_embed_image or args.use_miss_token_embed_text or args.use_miss_token_embed_numerical:
+            if args.use_miss_token_embed_image or args.use_miss_token_embed_numerical:
                 if args.use_miss_token_embed_image:
                     if "image" in model_name:
                         args.params['hyperparameters'][f'model.{model_name}.use_miss_token_embed'] = True
