@@ -1,6 +1,6 @@
 This folder contains the instructions for reproducing the result from the paper **Bag of Tricks for Multimodal AutoML with Image, Text, and Tabular Data.**
 
-# Installation
+# 1. Installation
 
 ```shell
 conda create -n ag python=3.10
