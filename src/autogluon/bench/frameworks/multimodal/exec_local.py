@@ -133,7 +133,7 @@ def get_args():
         "--eval_model_path", type=str, default=None, help="Model checkpoint path for evaluation."
     )
     parser.add_argument(
-        "--max_epochs", type=int, default=10, help="num of training epochs."
+        "--max_epochs", type=int, default=20, help="num of training epochs."
     )
     parser.add_argument(
         "--lr", type=float, default=0.0001
@@ -143,6 +143,9 @@ def get_args():
     )
     parser.add_argument(
         "--seed", type=int, default=0,
+    )
+    parser.add_argument(
+        "--resume", action="store_true", default=False
     )
 
     ### Basic Tricks
@@ -156,16 +159,7 @@ def get_args():
         "--warmup_steps", type=float, default=0.1
     )
     parser.add_argument(
-        "--categorical_convert_to_text_use_header_template",type=str, default="list"
-    )
-    parser.add_argument(
-        "--max_epochs", type=int, default=10, help="num of training epochs."
-    )
-    parser.add_argument(
         "--lr_decay", type=float, default=0.9, help="It is used only when lr_choice is layerwise_decay"
-    )
-    parser.add_argument(
-        "--resume", action="store_true", default=False
     )
 
     ### Multimodal Fusion Strategies
@@ -193,10 +187,13 @@ def get_args():
     
     ### Converting Tabular Data into Text
     parser.add_argument(
-        "--categorical_convert_to_text", type=bool, default=True, help="convert categorical columns to text or not."
+        "--categorical_convert_to_text", type=bool, default=False, help="convert categorical columns to text or not."
     )
     parser.add_argument(
         "--categorical_convert_to_text_use_header", action='store_true', default=False, help="integrate header information or not."
+    )
+    parser.add_argument(
+        "--categorical_convert_to_text_use_header_template",type=str, default="list"
     )
     parser.add_argument(
         "--numerical_convert_to_text", action='store_true', default=False, help="convert numerical columns to text or not."
