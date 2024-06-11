@@ -1,0 +1,455 @@
+# if feature_columns is null, then it is determined by ignore_columns
+base: &base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/DATA_FILE_NAME.zip
+  ori_name: ""
+  sha1sum: None
+  train_file: train.csv
+  test_file: test.csv
+  data_folder: null
+  splits:
+    - train
+    - test
+  train_subset: null
+  test_subset: null
+  feature_columns:
+    - ImageID
+  label_columns:
+    - LabelName
+  image_columns:
+    - image
+  ignore_columns: null
+  metric: acc
+  problem_type: multiclass
+  convert_to_log: False
+  loss_func: null
+  sep: ","
+  test_split_name: test
+  
+## Text+Tabular datasets
+fake:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/fake_job_postings2/{split}.csv
+  feature_columns:
+    null
+  label_columns:
+    - fraudulent
+  ignore_columns:
+    null
+  metric: roc_auc
+  problem_type: binary
+
+airbnb:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/airbnb_melbourne/{split}.pq
+  feature_columns:
+    null
+  label_columns:
+    - price_label
+  ignore_columns:
+    - id
+    - listing_url
+    - scrape_id
+    - last_scraped
+    - picture_url
+    - host_id
+    - host_url
+    - host_name
+    - host_thumbnail_url
+    - host_picture_url
+    - monthly_price
+    - weekly_price
+    - price
+    - calendar_last_scraped
+
+channel:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/news_channel/{split}.csv
+  feature_columns:
+    null
+  label_columns:
+    - channel
+  ignore_columns:
+    null
+
+qaa:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/google_quest_qa/{split}.pq
+  test_split_name: dev
+  feature_columns:
+    - question_title
+    - question_body
+    - answer
+    - category
+  label_columns:
+    - answer_type_reason_explanation
+  metric: r2
+  problem_type: regression
+
+qaq:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/google_quest_qa/{split}.pq
+  test_split_name: dev
+  feature_columns:
+    - question_title
+    - question_body
+    - answer
+    - category
+  label_columns:
+    - question_type_reason_explanation
+  metric: r2
+  problem_type: regression
+
+cloth:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/women_clothing_review/{split}.pq
+  feature_columns:
+    - Title
+    - Review Text
+    - Age
+    - Division Name
+    - Department Name
+    - Class Name
+  label_columns:
+    - Rating
+  metric: r2
+  problem_type: regression
+
+## Image+Text datasets
+ptech:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/persuasive_techniques_processed.zip
+  ori_name: persuasive_techniques
+  train_file: train_processed.csv
+  test_file: test_processed.csv
+  feature_columns:
+    - text
+    - image
+  label_columns:
+    - Smears
+    - Loaded Language
+    - Name calling/Labeling
+  image_columns:
+    - image
+  metric: roc_auc
+  problem_type: binary
+
+memotion:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/Memotion_processed.zip
+  ori_name: Memotion
+  feature_columns:
+    - image_name
+    - text_corrected
+  label_columns:
+    - overall_sentiment
+  image_columns:
+    - image_name
+
+food101:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/UPMC-Food101_processed.zip
+  ori_name: UPMC-Food101
+  feature_columns:
+    - image
+    - text
+  label_columns:
+    - label
+  image_columns:
+    - image
+
+aep:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/action_effect_pred_processed.zip
+  ori_name: action_effect_pred
+  feature_columns:
+    - descriptions
+    - images
+  label_columns:
+    - label
+  image_columns:
+    - images
+
+fakeddit:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/fakeddit_processed.zip
+  splits:
+    - train
+    - validation
+    - test
+  train_file: train.csv
+  val_file: validation.csv
+  test_file: test.csv
+  feature_columns:
+    - clean_title
+    - images
+  label_columns:
+    - 6_way_label
+  image_columns:
+    - images
+  sep: "\t"
+
+## Image+Tabular datasets
+ccd:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/CCD_processed.zip
+  ori_name: CCD
+  feature_columns:
+    - timing
+    - weather
+    - images
+  label_columns:
+    - egoinvolve
+  image_columns:
+    - images
+  metric: roc_auc
+  problem_type: binary
+
+HAM:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/skin_cancer_processed.zip
+  ori_name: skin_cancer
+  feature_columns:
+    - image_id
+    - dx_type
+    - age
+    - sex
+    - localization
+  label_columns:
+    - dx
+  image_columns:
+    - image_id
+
+wikiart:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/wikiart_processed.zip
+  feature_columns:
+    - file
+    - genre
+    - style
+  label_columns:
+    - artist
+  image_columns:
+    - file
+
+cd18:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/CD18_processed.zip
+  ori_name: CD18
+  feature_columns:
+    - name
+    - Model
+    - Release Date
+    - Weigth
+    - os
+    - Storage
+    - hit
+    - hit_count
+    - display_size
+    - V_resolution
+    - H_resolution
+    - camera
+    - video
+    - prcessor
+    - ram
+    - Battery
+    - Battery_type
+    - img
+  label_columns:
+    - Price
+  image_columns:
+    - img
+  problem_type: regression
+  metric: r2
+  convert_to_log: True
+
+DVM:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/DVM-CAR_processed.zip
+  ori_name: DVM-CAR
+  feature_columns:
+    - Maker
+    - Genmodel
+    - Adv_year
+    - Adv_month
+    - Color
+    - Reg_year
+    - Bodytype
+    - Runned_Miles
+    - Engin_size
+    - Gearbox
+    - Fuel_type
+    - Seat_num
+    - Door_num
+    - Image_name
+  label_columns:
+    - Price
+  image_columns:
+    - Image_name
+  problem_type: regression
+  metric: r2
+  convert_to_log: True
+
+## Image+Text+Tabular datasets
+petfinder:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/petfinder_kaggle.zip
+  test_file: dev.csv
+  feature_columns:
+    - Type
+    - Name
+    - Age
+    - Breed1
+    - Breed2
+    - Gender
+    - Color1
+    - Color2
+    - Color3
+    - MaturitySize
+    - FurLength
+    - Vaccinated
+    - Dewormed
+    - Sterilized
+    - Health
+    - Quantity
+    - Fee
+    - State
+    - VideoAmt
+    - Description
+    - PhotoAmt
+    - Images
+  label_columns:
+    - AdoptionSpeed
+  image_columns:
+    - Images
+  metric: quadratic_kappa
+  problem_type: multiclass
+
+covid:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/covid-chestxray-dataset_processed.zip
+  ori_name: covid-chestxray-dataset
+  feature_columns:
+    - offset
+    - sex
+    - age
+    - RT_PCR_positive
+    - survival
+    - intubated
+    - went_icu
+    - needed_supplemental_O2
+    - extubated
+    - temperature
+    - view
+    - modality
+    - filename
+    - clinical_notes
+    - other_notes
+  label_columns:
+    - finding
+  image_columns:
+    - filename
+
+artm:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/art-price-dataset_processed.zip
+  ori_name: art-price-dataset
+  feature_columns:
+    - images
+    - price
+    - artist
+    - title
+    - yearCreation
+    - signed
+    - condition
+    - period
+  label_columns:
+    - movement
+  image_columns:
+    - images
+
+seattle:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/seattle_airbnb_processed.zip
+  ori_name: seattle_airbnb
+  train_file: train.csv
+  test_file: test.csv
+  feature_columns: ['name', 'description', 'neighborhood_overview',
+       'host_since', 'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_listings_count',
+       'host_total_listings_count', 'host_has_profile_pic',
+       'host_identity_verified', 'neighbourhood', 'neighbourhood_cleansed',
+       'neighbourhood_group_cleansed', 'latitude', 'longitude',
+       'property_type', 'room_type', 'accommodates', 'bathrooms', 'bedrooms',
+       'beds', 'amenities', 'minimum_nights', 'maximum_nights',
+       'minimum_minimum_nights', 'maximum_minimum_nights',
+       'minimum_maximum_nights', 'maximum_maximum_nights',
+       'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'number_of_reviews', 'number_of_reviews_ltm',
+       'number_of_reviews_l30d', 'first_review', 'last_review',
+       'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'host_image', 'image']
+  label_columns:
+    - price
+  image_columns:
+    - image
+    - host_image
+  metric: r2
+  problem_type: regression
+  convert_to_log: True
+
+goodreads:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/goodreads_processed.zip
+  feature_columns:
+    - bookformat
+    - desc
+    - genre
+    - img
+    - reviews
+    - title
+  label_columns:
+    - rating
+  image_columns:
+    - img
+  metric: r2
+  problem_type: regression
+  convert_to_log: True
+
+KARD:
+  <<: *base
+  url: s3://automl-mm-bench/bag-of-tricks/datasets/KARD_processed.zip
+  feature_columns:
+    - name
+    - studio
+    - genres
+    - type
+    - episodes
+    - episodes_duration
+    - age_rating
+    - in_clubs
+    - in_collections
+    - in_favorites
+    - status
+    - planned
+    - completed
+    - watching
+    - dropped
+    - on_hold
+    - ongoing_years
+    - release_date
+    - image
+  label_columns:
+    - score
+  image_columns:
+    - image
+  problem_type: regression
+  metric: r2
+
