@@ -1,6 +1,7 @@
 import os
 from multiprocessing import Pool, current_process, Queue
 
+
 queue = Queue()
 NUM_GPUS = 8
 PROC_PER_GPU = 1

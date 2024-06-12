@@ -176,6 +176,7 @@ image_tabular_datasets = [
 # 已经通过的："petfinder", "covid-chestxray-dataset", "seattle_airbnb", "goodreads", 
 # 不确定："KARD", "art-price-dataset"
 
+
 all_modalities_datasets = ["petfinder", "covid-chestxray-dataset", "seattle_airbnb", "goodreads", "stylish-product", "KARD", "art-price-dataset"]
 # for run in [1]:
 run = 1

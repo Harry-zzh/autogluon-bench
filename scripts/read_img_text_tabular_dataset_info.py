@@ -61,7 +61,7 @@ image_tabular_datasets = [
     "skin_cancer", "Harumanis_mango", "CD18",
     "petfinder", "covid-chestxray-dataset", "seattle_airbnb", "goodreads", "stylish-product", "KARD", 
                           ] # 这里指的是cate列不会被convert to text的dataset。
-#"crypto-coven", "nike", "amazon-books-reviews","art-price-dataset" 效果比较差，需要去掉一些列再看。
+# "nike", "amazon-books-reviews","art-price-dataset" 效果比较差，需要去掉一些列再看。
 
 
 for dataset in [ # 去除impressions,  "crypto-coven", "nike", "amazon-books-reviews", 

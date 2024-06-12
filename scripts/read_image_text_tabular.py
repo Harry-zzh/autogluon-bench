@@ -108,7 +108,7 @@ for seed in [0,1,2]:
             "petfinder", "covid-chestxray-dataset", "art-price-dataset", "seattle_airbnb", "goodreads", "KARD"
             # "petfinder", "covid-chestxray-dataset", "seattle_airbnb", "KARD"
             # "art-price-dataset",  "goodreads",
-            # "covid-chestxray-dataset", "seattle_airbnb", 
+    
         ]:
             for convert_to_text in [False, ]:
                 # for ft_transformer_pretrained in [False]:

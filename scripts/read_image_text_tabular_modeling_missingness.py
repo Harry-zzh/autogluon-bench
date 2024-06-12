@@ -106,7 +106,7 @@ for seed in [0,1,2]:
             # "petfinder", "covid-chestxray-dataset","art-price-dataset", "seattle_airbnb", "goodreads","KARD"
             # "petfinder", "covid-chestxray-dataset", "seattle_airbnb", "goodreads", "stylish-product",  "art-price-dataset"
             "petfinder", "covid-chestxray-dataset", "art-price-dataset", "seattle_airbnb", "goodreads", "KARD"
-            # "petfinder", "covid-chestxray-dataset", "seattle_airbnb", "KARD"
+           
             # "art-price-dataset",  "goodreads",
             # "covid-chestxray-dataset", "seattle_airbnb", 
         ]:
